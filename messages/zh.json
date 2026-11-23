@@ -36,8 +36,50 @@
   },
   "workspace": {
     "title": "工作台",
-    "projectsComing": "项目列表与构建工作区将在下一任务组实现。",
-    "logoutDone": "已退出登录"
+    "newProject": "新建项目",
+    "projectNameLabel": "项目名称（可选）",
+    "projectNamePlaceholder": "我的第一个产品",
+    "promptLabel": "初始需求（可选）",
+    "promptPlaceholder": "描述你想构建的产品…",
+    "create": "创建",
+    "creating": "创建中…",
+    "cancel": "取消",
+    "deleteProject": "删除项目",
+    "deleteConfirm": "删除后项目对话与工程数据将被清除，且不可恢复。确认删除？",
+    "confirmDelete": "确认删除",
+    "emptyTitle": "还没有项目",
+    "emptyDesc": "创建你的第一个项目，告诉 AI 工程师你想构建什么。",
+    "open": "打开",
+    "logoutDone": "已退出登录",
+    "status": {
+      "idle": "空闲",
+      "queued": "排队中",
+      "generating": "生成中",
+      "building": "构建中",
+      "repairing": "修复中",
+      "failed": "失败",
+      "ready": "就绪"
+    }
+  },
+  "chat": {
+    "backToProjects": "项目列表",
+    "inputPlaceholder": "描述新需求或修改意见…",
+    "send": "发送",
+    "building": "构建中…",
+    "retry": "重试此轮",
+    "retrying": "重试中…",
+    "buildLogs": "构建过程",
+    "you": "你",
+    "engineer": "AI 工程师",
+    "failedRoundHint": "本轮构建失败，可重试。",
+    "stage": {
+      "queued": "排队中",
+      "generating": "AI 工程师生成中",
+      "building": "沙箱构建中",
+      "repairing": "自动修复中",
+      "success": "构建完成",
+      "failed": "构建失败"
+    }
   },
   "footer": {
     "product": "产品",

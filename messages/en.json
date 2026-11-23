@@ -36,8 +36,50 @@
   },
   "workspace": {
     "title": "Workspace",
-    "projectsComing": "The project list and build workspace will be implemented in the next task group.",
-    "logoutDone": "Logged out"
+    "newProject": "New project",
+    "projectNameLabel": "Project name (optional)",
+    "projectNamePlaceholder": "My first product",
+    "promptLabel": "Initial prompt (optional)",
+    "promptPlaceholder": "Describe the product you want to build…",
+    "create": "Create",
+    "creating": "Creating…",
+    "cancel": "Cancel",
+    "deleteProject": "Delete project",
+    "deleteConfirm": "Deleting removes the conversation and all project files permanently. Delete anyway?",
+    "confirmDelete": "Delete",
+    "emptyTitle": "No projects yet",
+    "emptyDesc": "Create your first project and tell the AI engineer what to build.",
+    "open": "Open",
+    "logoutDone": "Logged out",
+    "status": {
+      "idle": "Idle",
+      "queued": "Queued",
+      "generating": "Generating",
+      "building": "Building",
+      "repairing": "Repairing",
+      "failed": "Failed",
+      "ready": "Ready"
+    }
+  },
+  "chat": {
+    "backToProjects": "Projects",
+    "inputPlaceholder": "Describe a new requirement or change…",
+    "send": "Send",
+    "building": "Building…",
+    "retry": "Retry this round",
+    "retrying": "Retrying…",
+    "buildLogs": "Build process",
+    "you": "You",
+    "engineer": "AI Engineer",
+    "failedRoundHint": "This round failed. You can retry.",
+    "stage": {
+      "queued": "Queued",
+      "generating": "AI engineer is generating",
+      "building": "Building in sandbox",
+      "repairing": "Auto-repairing",
+      "success": "Build finished",
+      "failed": "Build failed"
+    }
   },
   "footer": {
     "product": "Product",
