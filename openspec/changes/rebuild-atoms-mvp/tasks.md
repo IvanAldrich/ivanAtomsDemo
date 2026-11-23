@@ -2,9 +2,9 @@
 
 ## 1. 项目脚手架与全局骨架
 
-- [ ] 1.1 初始化 Next.js（App Router）+ TypeScript + Tailwind + ESLint 项目结构，运行 `npm run build` 成功
-- [ ] 1.2 集成 next-intl：zh/en 消息文件、locale 协商中间件、根路径重定向与语言切换持久化，验证 `/` 重定向到默认语言且切换后二次访问保持（marketing-site：多语言路由）
-- [ ] 1.3 实现全局顶部导航（登录/登出入口、语言切换）与页脚（产品/资源/公司/社区四组链接），验证页脚全部站内链接在两种语言下均 200（marketing-site：全局导航）
+- [x] 1.1 初始化 Next.js（App Router）+ TypeScript + Tailwind + ESLint 项目结构，运行 `npm run build` 成功
+- [x] 1.2 集成 next-intl：zh/en 消息文件、locale 协商中间件、根路径重定向与语言切换持久化，验证 `/` 重定向到默认语言且切换后二次访问保持（marketing-site：多语言路由）
+- [x] 1.3 实现全局顶部导航（登录/登出入口、语言切换）与页脚（产品/资源/公司/社区四组链接），验证页脚全部站内链接在两种语言下均 200（marketing-site：全局导航）
 
 ## 2. 简化认证与数据层
 

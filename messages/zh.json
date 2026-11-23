@@ -1,0 +1,88 @@
+{
+  "brand": "IvanAtoms",
+  "tagline": "把想法变成可上线的产品",
+  "nav": {
+    "pricing": "定价",
+    "aiAgents": "AI Agent",
+    "models": "模型",
+    "tools": "工具",
+    "help": "帮助中心",
+    "templates": "模板",
+    "discover": "发现",
+    "usecases": "用例",
+    "comparison": "比较",
+    "prompts": "提示词",
+    "about": "关于我们",
+    "join": "加入我们",
+    "login": "登录",
+    "logout": "退出登录",
+    "dashboard": "工作台",
+    "language": "语言"
+  },
+  "footer": {
+    "product": "产品",
+    "resources": "资源",
+    "company": "公司",
+    "community": "社区",
+    "github": "GitHub",
+    "discord": "Discord",
+    "twitter": "X / Twitter",
+    "rights": "© {year} {brand} · 仅供演示"
+  },
+  "home": {
+    "heroBadge": "AI 工程师为你写全栈代码",
+    "heroTitle": "描述你的想法，\n拿到能上线的完整产品",
+    "heroSubtitle": "说出需求，AI 工程师自由生成前端 + 后端 + 数据库的完整代码工程，沙箱构建自修复，一键部署到独立运行时。几分钟，无需编码。",
+    "promptPlaceholder": "告诉工程师你想要什么产品…",
+    "start": "开始",
+    "emptyInputHint": "请先描述你的需求",
+    "buildWhat": "能构建什么？",
+    "trustTitle": "为什么选择我们"
+  },
+  "pages": {
+    "pricing": {
+      "title": "定价",
+      "desc": "演示产品：定价页内容将在后续任务组中完整实现。"
+    },
+    "aiAgents": {
+      "title": "AI Agent",
+      "desc": "演示产品：Agent 介绍页将在后续任务组中完整实现。"
+    },
+    "models": {
+      "title": "模型",
+      "desc": "演示产品：模型目录将在后续任务组中完整实现。"
+    },
+    "tools": {
+      "title": "工具",
+      "desc": "演示产品：工具页将在后续任务组中完整实现。"
+    },
+    "templates": {
+      "title": "模板",
+      "desc": "演示产品：模板库将在后续任务组中完整实现。"
+    },
+    "discover": {
+      "title": "发现",
+      "desc": "演示产品：社区发现页将在后续任务组中完整实现。"
+    },
+    "usecases": {
+      "title": "用例",
+      "desc": "演示产品：用例库将在后续任务组中完整实现。"
+    },
+    "comparison": {
+      "title": "比较",
+      "desc": "演示产品：竞品对比页将在后续任务组中完整实现。"
+    },
+    "prompts": {
+      "title": "提示词",
+      "desc": "演示产品：提示词库将在后续任务组中完整实现。"
+    },
+    "about": {
+      "title": "关于我们",
+      "desc": "演示产品：关于页将在后续任务组中完整实现。"
+    },
+    "join": {
+      "title": "加入我们",
+      "desc": "演示产品：招聘页将在后续任务组中完整实现。"
+    }
+  }
+}

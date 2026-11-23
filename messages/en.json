@@ -1,0 +1,88 @@
+{
+  "brand": "IvanAtoms",
+  "tagline": "Turn ideas into shipped products",
+  "nav": {
+    "pricing": "Pricing",
+    "aiAgents": "AI Agents",
+    "models": "Models",
+    "tools": "Tools",
+    "help": "Help Center",
+    "templates": "Templates",
+    "discover": "Discover",
+    "usecases": "Use Cases",
+    "comparison": "Comparison",
+    "prompts": "Prompts",
+    "about": "About",
+    "join": "Join Us",
+    "login": "Log in",
+    "logout": "Log out",
+    "dashboard": "Workspace",
+    "language": "Language"
+  },
+  "footer": {
+    "product": "Product",
+    "resources": "Resources",
+    "company": "Company",
+    "community": "Community",
+    "github": "GitHub",
+    "discord": "Discord",
+    "twitter": "X / Twitter",
+    "rights": "© {year} {brand} · For demo only"
+  },
+  "home": {
+    "heroBadge": "An AI engineer writes full-stack code for you",
+    "heroTitle": "Describe your idea,\nget a product that ships",
+    "heroSubtitle": "State your need. The AI engineer freely generates a complete codebase — frontend, backend, database — builds it in a sandbox with self-repair, and deploys it to its own runtime. Minutes, no coding.",
+    "promptPlaceholder": "Tell the engineer what product you want…",
+    "start": "Start",
+    "emptyInputHint": "Describe your need first",
+    "buildWhat": "What can it build?",
+    "trustTitle": "Why choose us"
+  },
+  "pages": {
+    "pricing": {
+      "title": "Pricing",
+      "desc": "Demo product: the pricing page will be fully implemented in a later task group."
+    },
+    "aiAgents": {
+      "title": "AI Agents",
+      "desc": "Demo product: the agents page will be fully implemented in a later task group."
+    },
+    "models": {
+      "title": "Models",
+      "desc": "Demo product: the model catalog will be fully implemented in a later task group."
+    },
+    "tools": {
+      "title": "Tools",
+      "desc": "Demo product: the tools page will be fully implemented in a later task group."
+    },
+    "templates": {
+      "title": "Templates",
+      "desc": "Demo product: the template library will be fully implemented in a later task group."
+    },
+    "discover": {
+      "title": "Discover",
+      "desc": "Demo product: the community discover page will be fully implemented in a later task group."
+    },
+    "usecases": {
+      "title": "Use Cases",
+      "desc": "Demo product: the use-case library will be fully implemented in a later task group."
+    },
+    "comparison": {
+      "title": "Comparison",
+      "desc": "Demo product: competitor comparison pages will be fully implemented in a later task group."
+    },
+    "prompts": {
+      "title": "Prompts",
+      "desc": "Demo product: the prompt library will be fully implemented in a later task group."
+    },
+    "about": {
+      "title": "About",
+      "desc": "Demo product: the about page will be fully implemented in a later task group."
+    },
+    "join": {
+      "title": "Join Us",
+      "desc": "Demo product: the hiring page will be fully implemented in a later task group."
+    }
+  }
+}
