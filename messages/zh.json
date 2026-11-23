@@ -19,6 +19,26 @@
     "dashboard": "工作台",
     "language": "语言"
   },
+  "auth": {
+    "loginTitle": "登录或注册",
+    "loginSubtitle": "开始使用 {brand} 创作",
+    "demoNotice": "演示环境：输入邮箱即可登录或注册，无需密码与验证码。请勿存放真实数据。",
+    "emailLabel": "邮箱",
+    "emailPlaceholder": "you@example.com",
+    "submit": "继续",
+    "submitting": "登录中…",
+    "invalidEmail": "请输入有效的邮箱地址",
+    "loginFailed": "登录失败，请重试",
+    "agreePrefix": "继续即表示你同意我们的",
+    "terms": "服务条款",
+    "and": "和",
+    "privacy": "隐私政策"
+  },
+  "workspace": {
+    "title": "工作台",
+    "projectsComing": "项目列表与构建工作区将在下一任务组实现。",
+    "logoutDone": "已退出登录"
+  },
   "footer": {
     "product": "产品",
     "resources": "资源",
@@ -83,6 +103,14 @@
     "join": {
       "title": "加入我们",
       "desc": "演示产品：招聘页将在后续任务组中完整实现。"
+    },
+    "privacyPolicy": {
+      "title": "隐私政策",
+      "desc": "演示产品：本页面为占位内容，正式文本将在后续提供。"
+    },
+    "termsOfService": {
+      "title": "服务条款",
+      "desc": "演示产品：本页面为占位内容，正式文本将在后续提供。"
     }
   }
 }

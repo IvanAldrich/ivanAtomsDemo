@@ -2,9 +2,12 @@ import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
 import { LocaleSwitcher } from "./locale-switcher";
 import { Logo } from "./logo";
+import { getSession } from "@/lib/session";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 export async function SiteHeader() {
   const t = await getTranslations();
+  const session = await getSession();
 
   return (
     <header className="sticky top-0 z-40 border-b border-neutral-100 bg-white/80 backdrop-blur">
@@ -30,12 +33,24 @@ export async function SiteHeader() {
         </div>
         <div className="flex items-center gap-2">
           <LocaleSwitcher />
-          <Link
-            href="/login"
-            className="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-700"
-          >
-            {t("nav.login")}
-          </Link>
+          {session ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+              >
+                {t("nav.dashboard")}
+              </Link>
+              <LogoutButton />
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+            >
+              {t("nav.login")}
+            </Link>
+          )}
         </div>
       </div>
     </header>

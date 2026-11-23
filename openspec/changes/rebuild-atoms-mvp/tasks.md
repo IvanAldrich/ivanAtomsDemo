@@ -8,9 +8,9 @@
 
 ## 2. 简化认证与数据层
 
-- [ ] 2.1 建立 Prisma + SQLite schema（users/projects/messages/app_versions，含构建状态与运行时字段）与 `storage/projects/{id}/` 目录约定并完成迁移，验证 `prisma migrate` 与 Studio 表结构正确
-- [ ] 2.2 实现邮箱即登录 API 与签名会话 cookie（`SESSION_SECRET`）及登出，验证新邮箱提交即建号登录、已有邮箱直接登录、登出后会话失效（user-auth：邮箱即登录/会话）
-- [ ] 2.3 实现登录页 UI（含「演示登录」明示与条款链接）、`redirect` 安全校验（仅站内路径）与私有路由守卫中间件，验证外站 redirect 被忽略、未登录访问 /dashboard 跳登录页并携带 redirect（user-auth：安全回跳/守卫）
+- [x] 2.1 建立 Prisma + SQLite schema（users/projects/messages/app_versions，含构建状态与运行时字段）与 `storage/projects/{id}/` 目录约定并完成迁移，验证 `prisma migrate` 与 Studio 表结构正确
+- [x] 2.2 实现邮箱即登录 API 与签名会话 cookie（`SESSION_SECRET`）及登出，验证新邮箱提交即建号登录、已有邮箱直接登录、登出后会话失效（user-auth：邮箱即登录/会话）
+- [x] 2.3 实现登录页 UI（含「演示登录」明示与条款链接）、`redirect` 安全校验（仅站内路径）与私有路由守卫中间件，验证外站 redirect 被忽略、未登录访问 /dashboard 跳登录页并携带 redirect（user-auth：安全回跳/守卫）
 
 ## 3. 项目与对话控制面
 

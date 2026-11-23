@@ -19,6 +19,26 @@
     "dashboard": "Workspace",
     "language": "Language"
   },
+  "auth": {
+    "loginTitle": "Log in or sign up",
+    "loginSubtitle": "Start building with {brand}",
+    "demoNotice": "Demo environment: enter any email to log in or sign up — no password, no verification code. Do not store real data.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Continue",
+    "submitting": "Signing in…",
+    "invalidEmail": "Please enter a valid email address",
+    "loginFailed": "Login failed, please retry",
+    "agreePrefix": "By continuing you agree to our",
+    "terms": "Terms of Service",
+    "and": "and",
+    "privacy": "Privacy Policy"
+  },
+  "workspace": {
+    "title": "Workspace",
+    "projectsComing": "The project list and build workspace will be implemented in the next task group.",
+    "logoutDone": "Logged out"
+  },
   "footer": {
     "product": "Product",
     "resources": "Resources",
@@ -83,6 +103,14 @@
     "join": {
       "title": "Join Us",
       "desc": "Demo product: the hiring page will be fully implemented in a later task group."
+    },
+    "privacyPolicy": {
+      "title": "Privacy Policy",
+      "desc": "Demo product: placeholder page; the full text will be provided later."
+    },
+    "termsOfService": {
+      "title": "Terms of Service",
+      "desc": "Demo product: placeholder page; the full text will be provided later."
     }
   }
 }
