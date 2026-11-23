@@ -2,8 +2,8 @@
 node_modules/
 .next/
 out/
-build/
-dist/
+/build/
+/dist/
 
 # 环境变量与密钥
 .env

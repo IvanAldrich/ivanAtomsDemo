@@ -27,24 +27,31 @@ export type ChatMessageInput = {
   content: string;
 };
 
-/** 流式补全：逐块回调文本增量，返回完整文本 */
+/** 流式补全：逐块回调文本增量（与推理增量），返回完整文本 */
 export async function streamChat(
   messages: ChatMessageInput[],
-  onDelta: (text: string) => void
+  onDelta: (text: string) => void,
+  onReasoning?: (text: string) => void
 ): Promise<string> {
   const stream = await getClient().chat.completions.create({
     model: llmModel(),
     messages,
     stream: true,
     temperature: 0.2,
+    // 整工程自由生成需要大输出（默认上限可能截断导致协议解析失败）
+    max_tokens: Number(process.env.LLM_MAX_OUTPUT_TOKENS ?? 16384),
   });
 
   let full = "";
   for await (const chunk of stream) {
-    const delta = chunk.choices[0]?.delta?.content ?? "";
-    if (delta) {
-      full += delta;
-      onDelta(delta);
+    const delta = chunk.choices[0]?.delta;
+    const reasoning = (delta as { reasoning_content?: string } | undefined)
+      ?.reasoning_content;
+    if (reasoning) onReasoning?.(reasoning);
+    const content = delta?.content ?? "";
+    if (content) {
+      full += content;
+      onDelta(content);
     }
   }
   return full;
