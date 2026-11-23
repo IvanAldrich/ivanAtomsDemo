@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
+import { BuildWhatSection, HeroPrompt } from "@/components/marketing/build-what";
+import { getSession } from "@/lib/session";
 
 export default async function HomePage({
   params,
@@ -10,11 +11,12 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("home");
+  const session = await getSession();
 
   return (
     <div className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[480px] bg-gradient-to-b from-brand-50 to-transparent" />
-      <section className="mx-auto max-w-4xl px-4 pb-20 pt-24 text-center">
+      <section className="mx-auto max-w-4xl px-4 pb-8 pt-24 text-center">
         <span className="inline-block rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
           {t("heroBadge")}
         </span>
@@ -24,18 +26,28 @@ export default async function HomePage({
         <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-neutral-600">
           {t("heroSubtitle")}
         </p>
-        <div className="mx-auto mt-8 flex max-w-2xl items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-3 shadow-sm">
-          <textarea
-            rows={2}
-            placeholder={t("promptPlaceholder")}
-            className="flex-1 resize-none rounded-xl px-3 py-2 text-sm text-neutral-800 outline-none placeholder:text-neutral-400"
-          />
-          <Link
-            href="/login"
-            className="shrink-0 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-700"
-          >
-            {t("start")}
-          </Link>
+        <HeroPrompt isLoggedIn={session !== null} />
+      </section>
+
+      <BuildWhatSection isLoggedIn={session !== null} />
+
+      <section className="border-t border-neutral-100 bg-neutral-50 py-16">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="text-center text-2xl font-bold text-neutral-900">
+            {t("trustTitle")}
+          </h2>
+          <div className="mt-8 grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
+            {["sandbox", "stack", "ship"].map((k) => (
+              <div key={k} className="rounded-xl bg-white p-6 shadow-sm">
+                <h3 className="text-base font-semibold text-neutral-900">
+                  {t(`trust.${k}.title`)}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-600">
+                  {t(`trust.${k}.desc`)}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </div>

@@ -19,6 +19,50 @@
     "dashboard": "Workspace",
     "language": "Language"
   },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Start free, scale as you go. Demo product: prices are structural examples only.",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "save": "save 20%",
+    "month": "mo",
+    "cta": "Start free",
+    "faqTitle": "FAQ",
+    "tiers": {
+      "free": {
+        "name": "Free",
+        "monthlyPrice": "$0",
+        "annualPrice": "$0",
+        "features": ["3 builds per day", "Single project concurrency", "Community support"]
+      },
+      "pro": {
+        "name": "Pro",
+        "monthlyPrice": "$12",
+        "annualPrice": "$9.6",
+        "features": ["Unlimited builds", "5-round self-repair", "Public URL publishing", "Email support"]
+      },
+      "max": {
+        "name": "Max",
+        "monthlyPrice": "$49",
+        "annualPrice": "$39",
+        "features": ["Everything in Pro", "Priority queue", "Advanced models", "Dedicated support"]
+      }
+    },
+    "faqs": [
+      {
+        "q": "Who owns the generated code?",
+        "a": "You do. The artifact is a standard Node/npm project you can export and host anywhere."
+      },
+      {
+        "q": "What if a build fails?",
+        "a": "The platform reads the error and auto-repairs up to 5 rounds; on failure the last working version is kept."
+      },
+      {
+        "q": "Do published products run independently?",
+        "a": "Yes. Each project runs in its own process and port, served through the platform reverse proxy at a public URL."
+      }
+    ]
+  },
   "auth": {
     "loginTitle": "Log in or sign up",
     "loginSubtitle": "Start building with {brand}",
@@ -106,12 +150,60 @@
     "start": "Start",
     "emptyInputHint": "Describe your need first",
     "buildWhat": "What can it build?",
-    "trustTitle": "Why choose us"
+    "previewAction": "Preview",
+    "clone": "Clone",
+    "trustTitle": "Why choose us",
+    "trust": {
+      "sandbox": {
+        "title": "Sandbox build with self-repair",
+        "desc": "Generated projects install, build and pass start validation in an isolated sandbox; failures feed errors back for up to 5 auto-repair rounds."
+      },
+      "stack": {
+        "title": "A complete full-stack artifact",
+        "desc": "Not just a page: frontend, backend APIs and data persistence, with the project structure freely designed by the AI engineer."
+      },
+      "ship": {
+        "title": "Ship your product in one click",
+        "desc": "Publish to a public URL once the build passes; iterate and redeploy atomically, rolling back to the old version on failure."
+      }
+    },
+    "category": {
+      "landing": {
+        "title": "SaaS landing page",
+        "desc": "A conversion-focused site: hero, features, pricing, CTA.",
+        "prompt": "Build a landing page for a SaaS product with a hero section, three feature cards, a pricing block and CTA buttons"
+      },
+      "brand": {
+        "title": "Brand website",
+        "desc": "A quiet, restrained brand showcase.",
+        "prompt": "Build a lifestyle home-goods brand website with serif typography, generous whitespace, a collection grid and store info footer"
+      },
+      "webapp": {
+        "title": "Web app",
+        "desc": "An interactive todo tool: add, complete, delete.",
+        "prompt": "Build a todo web app supporting add, toggle-complete and delete, with data persisted server-side"
+      },
+      "game": {
+        "title": "Browser game",
+        "desc": "A playable mini game: dodge the asteroids.",
+        "prompt": "Build a browser mini game where the player moves a ship with arrow keys to dodge asteroids and score points"
+      },
+      "dashboard": {
+        "title": "Dashboard",
+        "desc": "Metric cards, trend chart, detail table.",
+        "prompt": "Build an operations dashboard with 4 metric cards, an SVG trend line chart and a channel detail table"
+      },
+      "portfolio": {
+        "title": "Portfolio",
+        "desc": "A masonry portfolio with an intro header.",
+        "prompt": "Build a designer portfolio website with a dark intro header and a three-column masonry of project cards"
+      }
+    }
   },
   "pages": {
     "pricing": {
       "title": "Pricing",
-      "desc": "Demo product: the pricing page will be fully implemented in a later task group."
+      "desc": "Start free, scale as you go. Demo product: prices are structural examples only."
     },
     "aiAgents": {
       "title": "AI Agents",

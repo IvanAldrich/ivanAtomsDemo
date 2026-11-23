@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>待办 Web 应用</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#f1f5f9;display:flex;justify-content:center;padding:40px 16px}
+.app{width:340px;background:#fff;border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+h1{font-size:18px;margin:0 0 16px}
+form{display:flex;gap:8px;margin-bottom:16px}
+input{flex:1;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px}
+button{background:#4f46e5;color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+ul{list-style:none;padding:0;margin:0}
+li{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #f1f5f9;font-size:14px}
+li.done span{text-decoration:line-through;color:#94a3b8}
+li span{flex:1;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>今日待办</h1>
+<form onsubmit="return add(event)"><input id="i" placeholder="添加待办…"><button>添加</button></form>
+<ul id="list"></ul>
+</div>
+<script>
+const todos=[{t:'评审设计方案',d:true},{t:'回复客户邮件',d:false},{t:'准备周会材料',d:false}];
+function render(){document.getElementById('list').innerHTML=todos.map((x,i)=>`<li class="${x.d?'done':''}"><input type="checkbox" ${x.d?'checked':''} onchange="todos[${i}].d=this.checked;render()"><span onclick="todos[${i}].d=!todos[${i}].d;render()">${x.t}</span></li>`).join('')}
+function add(e){e.preventDefault();const v=document.getElementById('i').value.trim();if(v){todos.push({t:v,d:false});document.getElementById('i').value='';render()}return false}
+render();
+</script>
+</body>
+</html>

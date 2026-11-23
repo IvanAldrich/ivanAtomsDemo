@@ -19,9 +19,52 @@
     "dashboard": "工作台",
     "language": "语言"
   },
+  "pricing": {
+    "title": "定价",
+    "subtitle": "免费开始，按需扩展。演示产品：价格仅为结构示例。",
+    "monthly": "按月",
+    "annual": "按年",
+    "save": "省 20%",
+    "month": "月",
+    "cta": "免费开始",
+    "faqTitle": "常见问题",
+    "tiers": {
+      "free": {
+        "name": "免费版",
+        "monthlyPrice": "¥0",
+        "annualPrice": "¥0",
+        "features": ["每日 3 次构建", "单项目并发", "社区支持"]
+      },
+      "pro": {
+        "name": "专业版",
+        "monthlyPrice": "¥69",
+        "annualPrice": "¥55",
+        "features": ["无限构建", "自修复 5 轮", "公开 URL 发布", "邮件支持"]
+      },
+      "max": {
+        "name": "旗舰版",
+        "monthlyPrice": "¥299",
+        "annualPrice": "¥239",
+        "features": ["全部专业版权益", "优先队列", "高级模型", "专属支持"]
+      }
+    },
+    "faqs": [
+      {
+        "q": "生成的代码归谁？",
+        "a": "完全归你。产物是标准 Node/npm 工程，随时可导出走自己的基础设施。"
+      },
+      {
+        "q": "构建失败怎么办？",
+        "a": "平台会读取报错自动修复最多 5 轮；仍失败则保留上一个可用版本。"
+      },
+      {
+        "q": "发布的产品是独立运行的吗？",
+        "a": "是。每个项目运行在独立进程与端口上，经平台反向代理提供公开 URL。"
+      }
+    ]
+  },
   "auth": {
-    "loginTitle": "登录或注册",
-    "loginSubtitle": "开始使用 {brand} 创作",
+    "loginTitle": "登录或注册",    "loginSubtitle": "开始使用 {brand} 创作",
     "demoNotice": "演示环境：输入邮箱即可登录或注册，无需密码与验证码。请勿存放真实数据。",
     "emailLabel": "邮箱",
     "emailPlaceholder": "you@example.com",
@@ -106,12 +149,60 @@
     "start": "开始",
     "emptyInputHint": "请先描述你的需求",
     "buildWhat": "能构建什么？",
-    "trustTitle": "为什么选择我们"
+    "previewAction": "预览",
+    "clone": "克隆",
+    "trustTitle": "为什么选择我们",
+    "trust": {
+      "sandbox": {
+        "title": "沙箱构建 + 自修复",
+        "desc": "生成的工程在隔离沙箱中安装、构建并启动验证；失败自动读取报错修复，最多 5 轮。"
+      },
+      "stack": {
+        "title": "完整全栈产物",
+        "desc": "不只是一个页面：前端、后端接口与数据持久化，由 AI 工程师自由设计工程结构。"
+      },
+      "ship": {
+        "title": "一键上线你的产品",
+        "desc": "构建通过即发布为公开 URL，迭代重建替换上线；失败自动回滚旧版本。"
+      }
+    },
+    "category": {
+      "landing": {
+        "title": "SaaS 落地页",
+        "desc": "转化导向的产品官网：hero、特性、定价与 CTA。",
+        "prompt": "做一个 SaaS 产品的落地页官网，包含 hero 区、三个特性卡片、定价区块和 CTA 按钮"
+      },
+      "brand": {
+        "title": "品牌网站",
+        "desc": "安静克制的品牌展示：系列、门店与故事。",
+        "prompt": "做一个生活家居品牌官网，衬线字体、留白设计，包含系列展示网格和页脚门店信息"
+      },
+      "webapp": {
+        "title": "Web 应用",
+        "desc": "可交互的待办工具：添加、完成、删除。",
+        "prompt": "做一个待办事项 Web 应用，支持添加、勾选完成和删除，数据保存到服务端"
+      },
+      "game": {
+        "title": "浏览器游戏",
+        "desc": "开箱即玩的小游戏：躲避陨石得分。",
+        "prompt": "做一个浏览器小游戏，用方向键左右移动飞船躲避陨石并计分"
+      },
+      "dashboard": {
+        "title": "数据仪表板",
+        "desc": "指标卡片 + 趋势图 + 明细表。",
+        "prompt": "做一个运营数据仪表板，包含 4 个指标卡片、SVG 趋势折线图和渠道明细表"
+      },
+      "portfolio": {
+        "title": "作品集",
+        "desc": "瀑布流作品展示与个人介绍。",
+        "prompt": "做一个设计师作品集网站，深色头部介绍 + 三列瀑布流作品卡片"
+      }
+    }
   },
   "pages": {
     "pricing": {
       "title": "定价",
-      "desc": "演示产品：定价页内容将在后续任务组中完整实现。"
+      "subtitle": "免费开始，按需扩展。演示产品：以下价格仅为结构示例。"
     },
     "aiAgents": {
       "title": "AI Agent",

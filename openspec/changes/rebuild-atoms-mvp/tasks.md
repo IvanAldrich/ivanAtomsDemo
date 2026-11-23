@@ -41,10 +41,10 @@
 
 ## 7. 首页与营销内容
 
-- [ ] 7.1 实现首页转化区：需求输入 + 「开始」（未登录→登录带 redirect；已登录→携需求建项目进对话）、空输入提示，验证三条分支行为（marketing-site：首页转化区）
-- [ ] 7.2 准备 6 个品类演示工程（用本管线预生成并构建，随平台交付于 `storage/demos/`），实现预览弹窗（标题/iframe/克隆/关闭），克隆=登录后以品类需求建项目，验证弹窗与克隆链路（marketing-site：预览弹窗）
-- [ ] 7.3 实现定价页（三档、月/年切换、FAQ）与六类内容目录页（每类 2–6 条种子、筛选、draft 不产出路由），验证月年切换、筛选保持、draft 404（marketing-site/content-catalog）
-- [ ] 7.4 实现 per-locale sitemap、robots 与内容页 OG metadata，验证 sitemap 只含已发布页（content-catalog：sitemap）
+- [x] 7.1 实现首页转化区：需求输入 + 「开始」（未登录→登录带 redirect；已登录→携需求建项目进对话）、空输入提示，验证三条分支行为（marketing-site：首页转化区）
+- [x] 7.2 准备 6 个品类演示工程（用本管线预生成并构建，随平台交付于 `storage/demos/`），实现预览弹窗（标题/iframe/克隆/关闭），克隆=登录后以品类需求建项目，验证弹窗与克隆链路（marketing-site：预览弹窗）
+- [x] 7.3 实现定价页（三档、月/年切换、FAQ）与六类内容目录页（每类 2–6 条种子、筛选、draft 不产出路由），验证月年切换、筛选保持、draft 404（marketing-site/content-catalog）
+- [x] 7.4 实现 per-locale sitemap、robots 与内容页 OG metadata，验证 sitemap 只含已发布页（content-catalog：sitemap）
 
 ## 8. 集成验收
 

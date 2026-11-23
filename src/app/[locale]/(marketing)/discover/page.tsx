@@ -1,10 +1,3 @@
-import { PlaceholderPage } from "@/components/marketing/placeholder";
+import { DiscoverList } from "@/components/marketing/catalog-factories";
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  return <PlaceholderPage locale={locale} ns="discover" />;
-}
+export default DiscoverList;
