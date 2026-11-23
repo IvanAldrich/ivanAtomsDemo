@@ -27,5 +27,8 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  // 跳过：API、静态资源、产物代理（/p）与属主预览（/preview）
+  matcher: [
+    "/((?!api|_next|_vercel|p(?:/|$)|preview(?:/|$)|.*\\..*).*)",
+  ],
 };

@@ -72,6 +72,13 @@
     "you": "你",
     "engineer": "AI 工程师",
     "failedRoundHint": "本轮构建失败，可重试。",
+    "tabChat": "对话",
+    "tabPreview": "预览",
+    "viewportDesktop": "桌面",
+    "viewportMobile": "移动",
+    "reload": "刷新",
+    "previewUnavailable": "完成一次成功构建后即可在此预览你的产品。",
+    "openPublic": "公开链接",
     "stage": {
       "queued": "排队中",
       "generating": "AI 工程师生成中",

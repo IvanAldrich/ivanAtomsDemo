@@ -29,6 +29,8 @@ export default async function ChatPage({
       projectId={project.id}
       projectTitle={project.title}
       initialStatus={project.status}
+      hasVersion={project.currentVersionId !== null}
+      publishedSlug={project.publishedSlug}
       initialMessages={messages.map((m) => ({
         id: m.id,
         role: m.role,

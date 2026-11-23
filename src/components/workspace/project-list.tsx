@@ -96,6 +96,16 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectRow[]
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              {project.publishedSlug && (
+                <a
+                  href={`/p/${project.publishedSlug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-md border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm text-brand-700 hover:border-brand-300"
+                >
+                  {t("open")} ↗
+                </a>
+              )}
               <Link
                 href={`/chat/${project.id}`}
                 className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:border-neutral-300"

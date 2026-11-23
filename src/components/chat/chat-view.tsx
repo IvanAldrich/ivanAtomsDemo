@@ -20,11 +20,15 @@ export function ChatView({
   projectTitle,
   initialMessages,
   initialStatus,
+  hasVersion,
+  publishedSlug,
 }: {
   projectId: string;
   projectTitle: string;
   initialMessages: ChatMessage[];
   initialStatus: string;
+  hasVersion: boolean;
+  publishedSlug: string | null;
 }) {
   const t = useTranslations("chat");
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -33,6 +37,9 @@ export function ChatView({
   const [logs, setLogs] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [tab, setTab] = useState<"chat" | "preview">("chat");
+  const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
+  const [iframeKey, setIframeKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const refreshMessages = useCallback(async () => {
@@ -157,7 +164,7 @@ export function ChatView({
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-3.5rem)] max-w-3xl flex-col px-4">
+    <div className="mx-auto flex h-[calc(100vh-3.5rem)] max-w-5xl flex-col px-4">
       <div className="flex items-center gap-3 border-b border-neutral-200 py-3">
         <Link
           href="/dashboard"
@@ -165,13 +172,94 @@ export function ChatView({
         >
           ← {t("backToProjects")}
         </Link>
-        <h1 className="truncate text-base font-semibold text-neutral-900">
+        <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-neutral-900">
           {projectTitle}
         </h1>
+        {publishedSlug && (
+          <a
+            href={`/p/${publishedSlug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-md border border-brand-200 bg-brand-50 px-2.5 py-1 text-sm text-brand-700 hover:border-brand-300"
+          >
+            {t("openPublic")} ↗
+          </a>
+        )}
+        <div className="flex rounded-lg border border-neutral-200 bg-neutral-100 p-0.5 text-sm">
+          <button
+            onClick={() => setTab("chat")}
+            className={`rounded-md px-3 py-1 ${
+              tab === "chat"
+                ? "bg-white text-neutral-900 shadow-sm"
+                : "text-neutral-500"
+            }`}
+          >
+            {t("tabChat")}
+          </button>
+          <button
+            onClick={() => setTab("preview")}
+            disabled={!hasVersion}
+            className={`rounded-md px-3 py-1 disabled:opacity-40 ${
+              tab === "preview"
+                ? "bg-white text-neutral-900 shadow-sm"
+                : "text-neutral-500"
+            }`}
+          >
+            {t("tabPreview")}
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto py-6">
-        {messages.map((m) => (
+      {tab === "preview" ? (
+        <div className="flex min-h-0 flex-1 flex-col py-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex rounded-lg border border-neutral-200 p-0.5 text-sm">
+              <button
+                onClick={() => setViewport("desktop")}
+                className={`rounded-md px-3 py-1 ${
+                  viewport === "desktop"
+                    ? "bg-white shadow-sm text-neutral-900"
+                    : "text-neutral-500"
+                }`}
+              >
+                {t("viewportDesktop")}
+              </button>
+              <button
+                onClick={() => setViewport("mobile")}
+                className={`rounded-md px-3 py-1 ${
+                  viewport === "mobile"
+                    ? "bg-white shadow-sm text-neutral-900"
+                    : "text-neutral-500"
+                }`}
+              >
+                {t("viewportMobile")}
+              </button>
+            </div>
+            <button
+              onClick={() => setIframeKey((k) => k + 1)}
+              className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-600 hover:border-neutral-300"
+            >
+              ⟳ {t("reload")}
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 justify-center overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
+            <iframe
+              key={iframeKey}
+              src={`/preview/${projectId}/`}
+              sandbox="allow-scripts allow-forms allow-popups"
+              className={
+                viewport === "mobile"
+                  ? "h-full w-[390px] border-0 bg-white"
+                  : "h-full w-full border-0 bg-white"
+              }
+              title="App Viewer"
+            />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-6">
+            {messages.map((m) => (
           <div
             key={m.id}
             className={m.role === "user" ? "flex justify-end" : "flex"}
@@ -223,27 +311,29 @@ export function ChatView({
           </div>
         )}
         <div ref={messagesEndRef} />
-      </div>
+          </div>
 
-      <div className="border-t border-neutral-200 py-4">
-        <div className="flex items-end gap-2">
-          <textarea
-            rows={2}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t("inputPlaceholder")}
-            disabled={sending}
-            className="flex-1 resize-none rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-brand-500 disabled:opacity-60"
-          />
-          <button
-            onClick={send}
-            disabled={sending || !input.trim()}
-            className="h-10 shrink-0 rounded-xl bg-brand-600 px-5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-          >
-            {sending ? t("building") : t("send")}
-          </button>
-        </div>
-      </div>
+          <div className="border-t border-neutral-200 py-4">
+            <div className="flex items-end gap-2">
+              <textarea
+                rows={2}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={t("inputPlaceholder")}
+                disabled={sending}
+                className="flex-1 resize-none rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-brand-500 disabled:opacity-60"
+              />
+              <button
+                onClick={send}
+                disabled={sending || !input.trim()}
+                className="h-10 shrink-0 rounded-xl bg-brand-600 px-5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              >
+                {sending ? t("building") : t("send")}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

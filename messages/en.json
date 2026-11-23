@@ -72,6 +72,13 @@
     "you": "You",
     "engineer": "AI Engineer",
     "failedRoundHint": "This round failed. You can retry.",
+    "tabChat": "Chat",
+    "tabPreview": "Preview",
+    "viewportDesktop": "Desktop",
+    "viewportMobile": "Mobile",
+    "reload": "Reload",
+    "previewUnavailable": "Complete one successful build to preview your product here.",
+    "openPublic": "Public link",
     "stage": {
       "queued": "Queued",
       "generating": "AI engineer is generating",

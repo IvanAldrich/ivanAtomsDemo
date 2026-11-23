@@ -4,6 +4,7 @@ import { Logo } from "@/components/layout/logo";
 import { Link } from "@/i18n/navigation";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { getTranslations } from "next-intl/server";
+import { isolationLevel } from "@/lib/build/executor";
 
 export default async function WorkspaceLayout({
   children,
@@ -19,6 +20,7 @@ export default async function WorkspaceLayout({
     redirect(`/${locale}/login?redirect=${encodeURIComponent(`/${locale}/dashboard`)}`);
   }
   const t = await getTranslations({ locale });
+  const iso = await isolationLevel();
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
@@ -32,6 +34,13 @@ export default async function WorkspaceLayout({
               </span>
             </Link>
             <span className="text-sm text-neutral-400">{t("workspace.title")}</span>
+            <span
+              title={`RUNTIME_ISOLATION=${iso.level}${iso.degraded ? "（降级）" : ""}`}
+              className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700"
+            >
+              {iso.degraded ? "⚠ " : ""}
+              演示环境 · {iso.level} 级隔离
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-neutral-500 md:inline">
