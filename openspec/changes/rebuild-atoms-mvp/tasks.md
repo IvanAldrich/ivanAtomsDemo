@@ -4,40 +4,47 @@
 
 - [ ] 1.1 初始化 Next.js（App Router）+ TypeScript + Tailwind + ESLint 项目结构，运行 `npm run build` 成功
 - [ ] 1.2 集成 next-intl：zh/en 消息文件、locale 协商中间件、根路径重定向与语言切换持久化，验证 `/` 重定向到默认语言且切换后二次访问保持（marketing-site：多语言路由）
-- [ ] 1.3 实现全局顶部导航（登录/注册入口、语言切换）与页脚（产品/资源/公司/社区四组链接），验证页脚全部站内链接在两种语言下均 200（marketing-site：全局导航）
+- [ ] 1.3 实现全局顶部导航（登录/登出入口、语言切换）与页脚（产品/资源/公司/社区四组链接），验证页脚全部站内链接在两种语言下均 200（marketing-site：全局导航）
 
-## 2. 数据驱动内容目录
+## 2. 简化认证与数据层
 
-- [ ] 2.1 定义六类内容（模型/用例/对比/提示词/模板/发现）的 Zod schema 与种子数据文件（每类 2–6 条，含 draft 样例与 zh/en 双语字段），运行类型校验通过
-- [ ] 2.2 实现模型列表页与详情页及供应商筛选（URL 参数驱动），验证筛选后刷新保持、不存在 slug 返回 404（content-catalog）
-- [ ] 2.3 实现用例/对比/提示词/模板/发现五类的列表页与详情页（generateStaticParams 预渲染、模板分类导航、发现已保存 tab 引导登录），验证 draft 条目路由 404 且不出现在列表（content-catalog）
-- [ ] 2.4 实现 app/sitemap.ts（per-locale 收录已发布内容页）、robots.ts 与详情页 OG metadata，验证 sitemap 输出不含草稿且含全部已发布页（content-catalog：sitemap）
+- [ ] 2.1 建立 Prisma + SQLite schema（users/projects/messages/app_versions）并完成迁移，验证 `prisma migrate` 与 Studio 中四张表结构正确
+- [ ] 2.2 实现邮箱即登录 API 与签名会话 cookie（`SESSION_SECRET`）及登出，验证新邮箱提交即建号登录、已有邮箱直接登录、登出后会话失效（user-auth：邮箱即登录/会话）
+- [ ] 2.3 实现登录页 UI（含「演示登录」明示与条款链接）、`redirect` 安全校验（仅站内路径）与私有路由守卫中间件，验证外站 redirect 被忽略、未登录访问 /dashboard 跳登录页并携带 redirect（user-auth：安全回跳/守卫）
 
-## 3. 首页转化区
+## 3. 项目与对话控制面
 
-- [ ] 3.1 实现首页：hero 与需求输入框+「开始」、信任背书区、agent 团队展示、FAQ 折叠，验证空输入点击「开始」时提示且不跳转（marketing-site：首页转化区）
-- [ ] 3.2 实现「能构建什么」品类卡片区：6 个站内静态演示页 + 预览模态框（标题/iframe/克隆/关闭），验证点击卡片弹出模态框且 iframe 加载对应演示页（marketing-site：预览弹窗）
-- [ ] 3.3 实现定价页（免费/专业/旗舰三档、月/年切换含折扣说明、积分档位表、FAQ），验证周期切换后价格与折扣文案变化（marketing-site：定价页）
+- [ ] 3.1 实现项目 CRUD API（按 owner 隔离、创建可携带初始需求消息、删除级联清消息与版本），验证第二账号访问他人项目返回 404、删除后项目与对话路由均 404（workspace-projects）
+- [ ] 3.2 实现 /dashboard 项目列表（按更新时间倒序、空状态引导、删除二次确认），验证排序与取消删除行为（workspace-projects）
+- [ ] 3.3 实现 /chat/[id] 消息流界面与历史读取 API，验证刷新或重新进入后消息按原顺序完整恢复（chat-build：历史持久化）
+- [ ] 3.4 实现消息发送 API：消息落库、项目内串行构建队列、排队与失败重试语义，验证构建中追加消息排队、失败显示重试入口且重试成功（chat-build：触发构建/排队/失败）
 
-## 4. 认证与会话
+## 4. 应用生成（核心闭环）
 
-- [ ] 4.1 集成 Auth.js v5：Google provider + Email provider、JWT 会话、用户落库，本地完成一次 Google 登录并看到会话用户（user-auth：Google OAuth）
-- [ ] 4.2 实现邮件 provider 抽象（console/resend）与验证码发送、时效与错误提示，验证 console 模式下新邮箱触发验证码邮件、错误验证码被拒（user-auth：登录注册合一）
-- [ ] 4.3 实现登录页 UI（登录注册合一、条款链接）与 `redirect` 安全校验（仅站内路径）、登出、私有路由守卫中间件，验证外站 redirect 被忽略、未登录访问 /dashboard 跳登录页并携带 redirect（user-auth：安全回跳/守卫）
+- [ ] 4.1 实现 LLM provider 薄抽象（`LLM_BASE_URL/API_KEY/MODEL` 环境变量）与生成系统提示（自包含单页 HTML 约束：内联 CSS/JS、无外部服务依赖、禁访问宿主），验证配置后可完成一次流式调用
+- [ ] 4.2 实现生成管线：SSE 流式过程回传 → 产物校验（HTML 结构完整、大小上限）→ 成功保存 app_versions 新版本并关联触发消息、更新项目当前版本，验证一条需求端到端产出可在浏览器直接运行的应用（app-generation：生成/版本化）
+- [ ] 4.3 实现迭代生成：请求上下文含需求历史与当前产物，验证两轮迭代后新版本体现修改且旧版本仍保留（app-generation：迭代更新）
+- [ ] 4.4 实现失败保护：构建失败时不写入新版本并回传可重试错误，验证失败后项目当前版本仍为上一轮产物（app-generation：失败保护）
 
-## 5. 工作区：项目与对话构建
+## 5. 预览与发布（App Viewer + 公开 URL）
 
-- [ ] 5.1 建立 Prisma + SQLite 数据层（users/projects/messages）与项目 CRUD API（按 owner 隔离），验证用第二账号访问他人项目返回 404（workspace-projects：访问隔离）
-- [ ] 5.2 实现 /dashboard 项目列表（按更新时间倒序、空状态引导、删除二次确认），验证确认删除后项目与对话路由均 404、取消删除无变化（workspace-projects）
-- [ ] 5.3 实现 /chat/[id] 消息流界面与历史读取 API，验证刷新或重新进入后消息按原顺序完整恢复（chat-build：历史持久化）
-- [ ] 5.4 实现 /api/projects/[id]/chat 流式接口（SSE、服务端消息先落库、项目内串行队列、失败返回可重试错误），验证流式逐块渲染、生成中状态、失败重试后正常追加（chat-build）
-- [ ] 5.5 打通全链路转化：未登录首页提交需求 → 登录 → 携需求建项目进对话页；预览弹窗克隆 → 登录 → 建项目，按此脚本手工端到端验证一遍（marketing-site + workspace-projects 集成）
+- [ ] 5.1 实现产物渲染端点（属主校验的工作区预览 + `GET /p/[slug]` 公开路由）与沙箱 iframe（sandbox 无 allow-same-origin + CSP），验证产物内脚本无法读取宿主 Cookie（app-generation：沙箱渲染）
+- [ ] 5.2 实现 App Viewer（iframe 渲染当前版本、桌面/移动视口切换、构建完成后刷新到新版本），验证视口切换与版本跟随（app-delivery：App Viewer）
+- [ ] 5.3 实现发布/取消发布 API（nanoid slug），验证发布后匿名访问公开 URL 可完整交互、未发布与取消发布返回 404、迭代后再发布同 URL 内容更新（app-delivery：发布）
+- [ ] 5.4 实现交付入口：项目列表预览/公开链接入口、对话页切换 App Viewer，验证从列表直达预览（app-delivery：交付入口）
 
-## 6. 集成验收
+## 6. 首页与营销内容
 
-- [ ] 6.1 运行 `npm run build` 并冒烟全部路由（营销页与内容页 200、私有路由重定向、sitemap 可达），构建输出无错误
-- [ ] 6.2 编写 README（本地启动步骤、环境变量清单、内容数据文件格式与新增条目方法），按 README 命令从零启动成功
-- [ ] 6.3 对照五个 spec 的全部 Scenario 逐条验收并记录结果，全部通过
+- [ ] 6.1 实现首页转化区：需求输入 + 「开始」（未登录→登录带 redirect；已登录→携需求建项目进对话）、空输入提示，验证三条分支行为（marketing-site：首页转化区）
+- [ ] 6.2 实现「能构建什么」预览弹窗：6 个预生成演示应用（复用产物渲染路径）+ 模态框（标题/iframe/克隆/关闭），克隆=登录后以品类需求建项目，验证弹窗与克隆链路（marketing-site：预览弹窗）
+- [ ] 6.3 实现定价页（三档、月/年切换、FAQ）与六类内容目录页（每类 2–6 条种子、供应商/品类筛选、draft 不产出路由），验证月年切换、筛选保持、draft 404（marketing-site/content-catalog）
+- [ ] 6.4 实现 per-locale sitemap、robots 与内容页 OG metadata，验证 sitemap 只含已发布页（content-catalog：sitemap）
+
+## 7. 集成验收
+
+- [ ] 7.1 运行 `npm run build` 并冒烟全部路由（营销与内容页 200、私有路由重定向、`/p/[slug]` 行为正确），构建输出无错误
+- [ ] 7.2 编写 README（本地启动、环境变量、内容数据格式、演示登录说明），按 README 从零启动成功
+- [ ] 7.3 对照全部 spec 的 Scenario 逐条验收并记录，重点跑通核心闭环脚本：邮箱登录→提交需求→生成应用→App Viewer 预览→发布→匿名访问→迭代→再发布→取消发布
 
 ## Workflow follow-up
 
