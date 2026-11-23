@@ -8,43 +8,49 @@
 
 ## 2. 简化认证与数据层
 
-- [ ] 2.1 建立 Prisma + SQLite schema（users/projects/messages/app_versions）并完成迁移，验证 `prisma migrate` 与 Studio 中四张表结构正确
+- [ ] 2.1 建立 Prisma + SQLite schema（users/projects/messages/app_versions，含构建状态与运行时字段）与 `storage/projects/{id}/` 目录约定并完成迁移，验证 `prisma migrate` 与 Studio 表结构正确
 - [ ] 2.2 实现邮箱即登录 API 与签名会话 cookie（`SESSION_SECRET`）及登出，验证新邮箱提交即建号登录、已有邮箱直接登录、登出后会话失效（user-auth：邮箱即登录/会话）
 - [ ] 2.3 实现登录页 UI（含「演示登录」明示与条款链接）、`redirect` 安全校验（仅站内路径）与私有路由守卫中间件，验证外站 redirect 被忽略、未登录访问 /dashboard 跳登录页并携带 redirect（user-auth：安全回跳/守卫）
 
 ## 3. 项目与对话控制面
 
-- [ ] 3.1 实现项目 CRUD API（按 owner 隔离、创建可携带初始需求消息、删除级联清消息与版本），验证第二账号访问他人项目返回 404、删除后项目与对话路由均 404（workspace-projects）
-- [ ] 3.2 实现 /dashboard 项目列表（按更新时间倒序、空状态引导、删除二次确认），验证排序与取消删除行为（workspace-projects）
+- [ ] 3.1 实现项目 CRUD API（按 owner 隔离、创建可携带初始需求消息），验证第二账号访问他人项目返回 404（workspace-projects）
+- [ ] 3.2 实现 /dashboard 项目列表（按更新时间倒序、空状态引导、删除二次确认并触发级联清理任务），验证确认删除后项目/对话路由 404 且 `storage/projects/{id}` 被移除（workspace-projects + build-pipeline：删除级联）
 - [ ] 3.3 实现 /chat/[id] 消息流界面与历史读取 API，验证刷新或重新进入后消息按原顺序完整恢复（chat-build：历史持久化）
-- [ ] 3.4 实现消息发送 API：消息落库、项目内串行构建队列、排队与失败重试语义，验证构建中追加消息排队、失败显示重试入口且重试成功（chat-build：触发构建/排队/失败）
+- [ ] 3.4 实现消息发送 API 与 SSE 通道：消息落库、全局构建队列（并发 1）、排队状态与失败重试语义，验证构建中追加消息排队、失败显示重试入口且重试成功（chat-build：触发/排队/失败）
 
-## 4. 应用生成（核心闭环）
+## 4. 工程自由生成
 
-- [ ] 4.1 实现 LLM provider 薄抽象（`LLM_BASE_URL/API_KEY/MODEL` 环境变量）与生成系统提示（自包含单页 HTML 约束：内联 CSS/JS、无外部服务依赖、禁访问宿主），验证配置后可完成一次流式调用
-- [ ] 4.2 实现生成管线：SSE 流式过程回传 → 产物校验（HTML 结构完整、大小上限）→ 成功保存 app_versions 新版本并关联触发消息、更新项目当前版本，验证一条需求端到端产出可在浏览器直接运行的应用（app-generation：生成/版本化）
-- [ ] 4.3 实现迭代生成：请求上下文含需求历史与当前产物，验证两轮迭代后新版本体现修改且旧版本仍保留（app-generation：迭代更新）
-- [ ] 4.4 实现失败保护：构建失败时不写入新版本并回传可重试错误，验证失败后项目当前版本仍为上一轮产物（app-generation：失败保护）
+- [ ] 4.1 实现 LLM provider 薄抽象（`LLM_BASE_URL/API_KEY/MODEL`）与自由生成提示（运行契约：Node 20/npm、`npm start` + PORT、数据写 DATA_DIR、禁访问宿主；工程惯例参考），验证配置后可完成一次流式调用（app-generation：生成内容安全约束）
+- [ ] 4.2 实现文件输出协议解析（工程计划 + 逐文件路径/内容，新增/修改/删除标记）与快照落盘校验（package.json 存在、路径无穿越），验证一轮生成落盘出完整多文件工程（app-generation：文件协议落盘）
+- [ ] 4.3 实现迭代生成上下文组装（需求历史摘要 + 当前文件树 + 按需文件内容），验证一次「加页面」迭代后新快照包含新文件且未提及文件与上一版本一致（app-generation：迭代修改）
 
-## 5. 预览与发布（App Viewer + 公开 URL）
+## 5. 构建管线与自修复
 
-- [ ] 5.1 实现产物渲染端点（属主校验的工作区预览 + `GET /p/[slug]` 公开路由）与沙箱 iframe（sandbox 无 allow-same-origin + CSP），验证产物内脚本无法读取宿主 Cookie（app-generation：沙箱渲染）
-- [ ] 5.2 实现 App Viewer（iframe 渲染当前版本、桌面/移动视口切换、构建完成后刷新到新版本），验证视口切换与版本跟随（app-delivery：App Viewer）
-- [ ] 5.3 实现发布/取消发布 API（nanoid slug），验证发布后匿名访问公开 URL 可完整交互、未发布与取消发布返回 404、迭代后再发布同 URL 内容更新（app-delivery：发布）
-- [ ] 5.4 实现交付入口：项目列表预览/公开链接入口、对话页切换 App Viewer，验证从列表直达预览（app-delivery：交付入口）
+- [ ] 5.1 实现隔离执行器两级：容器级（检测 Docker 可用）与进程级降级（受限子进程 + ulimit + 超时），当前级别 MUST 在界面与日志明示，验证进程级构建无法读取宿主业务库文件且降级提示可见（build-pipeline：沙箱构建/隔离级别明示）
+- [ ] 5.2 实现构建流程：`npm install` → `npm run build`（无则跳过）→ 启动验证（`npm start` + 端口就绪探测 + 启动超时），构建与安装日志流式回传对话，验证日志逐块可见且含失败原文（build-pipeline：构建日志/启动验证）
+- [ ] 5.3 实现自修复循环：失败提取错误尾部 + 相关文件回传 LLM 产出修复并重建，上限 5 轮，超限明确失败，验证「首轮故意失败 → 第二轮修复成功」与「连续超限后当前版本不变」两条路径（build-pipeline：自修复循环）
+- [ ] 5.4 实现版本落账：仅构建验证成功的快照写入 `app_versions` 并关联消息、更新项目当前版本，验证失败轮次不产生新版本（app-generation：以构建成功为界的版本化）
 
-## 6. 首页与营销内容
+## 6. 运行时与发布交付
 
-- [ ] 6.1 实现首页转化区：需求输入 + 「开始」（未登录→登录带 redirect；已登录→携需求建项目进对话）、空输入提示，验证三条分支行为（marketing-site：首页转化区）
-- [ ] 6.2 实现「能构建什么」预览弹窗：6 个预生成演示应用（复用产物渲染路径）+ 模态框（标题/iframe/克隆/关闭），克隆=登录后以品类需求建项目，验证弹窗与克隆链路（marketing-site：预览弹窗）
-- [ ] 6.3 实现定价页（三档、月/年切换、FAQ）与六类内容目录页（每类 2–6 条种子、供应商/品类筛选、draft 不产出路由），验证月年切换、筛选保持、draft 404（marketing-site/content-catalog）
-- [ ] 6.4 实现 per-locale sitemap、robots 与内容页 OG metadata，验证 sitemap 只含已发布页（content-catalog：sitemap）
+- [ ] 6.1 实现运行时管理器：为项目当前版本分配空闲端口、拉起进程、stdout 落日志、崩溃标记状态、宿主重启后按 `run.json` best-effort 恢复，验证项目进程被 kill 后宿主与其他项目不受影响（app-delivery：独立运行时）
+- [ ] 6.2 实现内置反向代理：`/p/{slug}/*` → 项目端口（header/常见方法透传）与属主校验的 `/preview/{projectId}` 预览代理，验证代理路由可达项目应用首页与接口（app-delivery：App Viewer 代理）
+- [ ] 6.3 实现发布/取消发布/迭代替换 API（nanoid slug、新版本验证通过后原子切换、失败回滚在线旧版本、取消后 404 并停进程），验证发布后匿名完整使用（含接口与数据持久）、迭代同 URL 更新、取消发布 404、更新失败回滚四条场景（app-delivery：发布/迭代更新）
+- [ ] 6.4 实现 App Viewer 组件（沙箱 iframe + 桌面/移动视口切换 + 构建状态联动）与项目列表/对话页交付入口，验证从列表直达预览与视口切换（app-delivery：App Viewer/交付入口）
 
-## 7. 集成验收
+## 7. 首页与营销内容
 
-- [ ] 7.1 运行 `npm run build` 并冒烟全部路由（营销与内容页 200、私有路由重定向、`/p/[slug]` 行为正确），构建输出无错误
-- [ ] 7.2 编写 README（本地启动、环境变量、内容数据格式、演示登录说明），按 README 从零启动成功
-- [ ] 7.3 对照全部 spec 的 Scenario 逐条验收并记录，重点跑通核心闭环脚本：邮箱登录→提交需求→生成应用→App Viewer 预览→发布→匿名访问→迭代→再发布→取消发布
+- [ ] 7.1 实现首页转化区：需求输入 + 「开始」（未登录→登录带 redirect；已登录→携需求建项目进对话）、空输入提示，验证三条分支行为（marketing-site：首页转化区）
+- [ ] 7.2 准备 6 个品类演示工程（用本管线预生成并构建，随平台交付于 `storage/demos/`），实现预览弹窗（标题/iframe/克隆/关闭），克隆=登录后以品类需求建项目，验证弹窗与克隆链路（marketing-site：预览弹窗）
+- [ ] 7.3 实现定价页（三档、月/年切换、FAQ）与六类内容目录页（每类 2–6 条种子、筛选、draft 不产出路由），验证月年切换、筛选保持、draft 404（marketing-site/content-catalog）
+- [ ] 7.4 实现 per-locale sitemap、robots 与内容页 OG metadata，验证 sitemap 只含已发布页（content-catalog：sitemap）
+
+## 8. 集成验收
+
+- [ ] 8.1 运行 `npm run build` 并冒烟全部路由（营销与内容页 200、私有路由重定向、`/p/[slug]` 与 `/preview` 行为正确），构建输出无错误
+- [ ] 8.2 编写 README（启动、环境变量、隔离级别说明与 demo 边界声明、内容数据格式、演示登录说明），按 README 从零启动成功
+- [ ] 8.3 对照全部 spec 的 Scenario 逐条验收并记录，重点跑通核心闭环脚本：邮箱登录→提交需求→自由生成工程→构建（含一次自修复演示）→发布→匿名完整使用→迭代→重建替换上线→取消发布；另验证删除级联与更新失败回滚
 
 ## Workflow follow-up
 
