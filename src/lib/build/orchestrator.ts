@@ -158,6 +158,7 @@ export async function runBuildRound(
             const files = wroteSnapshot ? await selectKeyFiles(candidate) : [];
             const gen = await generateRepairRound(
               {
+                requirement: message.content,
                 error: lastError,
                 tree,
                 keyFileContents: files,

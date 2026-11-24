@@ -67,6 +67,7 @@ export async function generateFirstRound(
 /** 修复轮生成：协议校验失败（无文件落盘）或构建失败（有文件） */
 export async function generateRepairRound(
   input: {
+    requirement: string;
     error: string;
     tree: string[];
     keyFileContents: Array<{ path: string; content: string }>;

@@ -92,6 +92,7 @@ ${contents || "（无注入）"}
 }
 
 export function buildRepairPrompt(input: {
+  requirement: string;
   error: string;
   tree: string[];
   keyFileContents: Array<{ path: string; content: string }>;
@@ -104,6 +105,9 @@ export function buildRepairPrompt(input: {
     .join("\n\n");
 
   return `上一轮输出未通过平台的校验或构建，需要修复。
+
+# 不可丢失的用户需求（修复时必须保持完整实现，禁止回退或删减需求功能）
+${input.requirement.slice(0, 2000)}
 
 # 失败原因 / 错误输出（截断）
 \`\`\`
@@ -118,5 +122,5 @@ ${contents ? `# 相关文件内容\n${contents}` : ""}
 
 请按输出协议输出修复后的完整文件${
     hasFiles ? "（只输出需要修改的文件，未提及的保持不变）" : ""
-  }。`;
+  }。修复目标是同时满足：构建通过 + 用户需求功能完整。`;
 }
