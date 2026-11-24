@@ -30,7 +30,7 @@ export default async function ChatPage({
       projectTitle={project.title}
       initialStatus={project.status}
       hasVersion={project.currentVersionId !== null}
-      publishedSlug={project.publishedSlug}
+      initialPublishedSlug={project.publishedSlug}
       initialMessages={messages.map((m) => ({
         id: m.id,
         role: m.role,

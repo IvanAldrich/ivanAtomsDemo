@@ -119,6 +119,37 @@ export async function runBuildRound(
               (text) => emit({ type: "log", text })
             );
             lastRaw = gen.raw;
+
+            // 对话式消息：迭代轮中模型无文件输出且给了文字回答 → 直接回复，不构建
+            const conversational =
+              ctx !== null &&
+              gen.plan.files.length === 0 &&
+              gen.plan.deletes.length === 0 &&
+              gen.raw.trim().length > 0;
+            if (conversational) {
+              const reply = gen.raw.trim().slice(0, 4000);
+              await prisma.message.create({
+                data: {
+                  projectId: job.projectId,
+                  role: "assistant",
+                  content: reply,
+                  buildRound: round,
+                  buildStatus: "success",
+                },
+              });
+              await prisma.message.update({
+                where: { id: message.id },
+                data: { buildStatus: "success" },
+              });
+              await prisma.project.update({
+                where: { id: job.projectId },
+                data: { status: "ready", updatedAt: new Date() },
+              });
+              emit({ type: "stage", stage: "success" });
+              emit({ type: "done", ok: true });
+              return;
+            }
+
             validatePlan(gen.plan, { requirePackageJson: !baseDir });
             await writeSnapshot(baseDir, candidate, gen.plan);
             finalFileList = gen.plan.files.map((f) => f.path);

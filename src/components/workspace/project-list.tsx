@@ -18,17 +18,15 @@ export type ProjectRow = {
   updatedAt: string;
 };
 
+const IN_FLIGHT = new Set(["queued", "generating", "building", "repairing"]);
+
 function statusClass(status: string) {
+  if (IN_FLIGHT.has(status)) return "bg-amber-50 text-amber-700";
   switch (status) {
     case "ready":
       return "bg-emerald-50 text-emerald-700";
     case "failed":
       return "bg-red-50 text-red-600";
-    case "queued":
-    case "generating":
-    case "building":
-    case "repairing":
-      return "bg-amber-50 text-amber-700";
     default:
       return "bg-neutral-100 text-neutral-600";
   }
@@ -86,8 +84,11 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectRow[]
                   {project.title}
                 </Link>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${statusClass(project.status)}`}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs ${statusClass(project.status)}`}
                 >
+                  {IN_FLIGHT.has(project.status) && (
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+                  )}
                   {t(`status.${project.status}`)}
                 </span>
               </div>
@@ -108,9 +109,13 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectRow[]
               )}
               <Link
                 href={`/chat/${project.id}`}
-                className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:border-neutral-300"
+                className={`rounded-md border px-3 py-1.5 text-sm hover:border-neutral-300 ${
+                  IN_FLIGHT.has(project.status)
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-neutral-200 text-neutral-700"
+                }`}
               >
-                {t("open")}
+                {IN_FLIGHT.has(project.status) ? t("viewProgress") : t("open")}
               </Link>
               <button
                 onClick={() => setDeleteTarget(project)}
