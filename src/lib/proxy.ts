@@ -12,13 +12,16 @@ const HOP_BY_HOP = new Set([
   "host",
 ]);
 
-/** 注入到产物 HTML <head> 的前缀垫片：让根绝对路径的 fetch/XHR/EventSource 也能命中代理前缀 */
+/** 注入到产物 HTML <head> 的前缀垫片：路径前缀兼容 + 沙箱存储兜底 + 预览错误上报 */
 function shimScript(prefix: string): string {
   return `<script>(function(){var BASE=${JSON.stringify(prefix)};function fix(u){try{if(typeof u==="string"&&u.charAt(0)==="/"&&u.charAt(1)!=="/"&&u.indexOf(BASE+"/")!==0&&u!==BASE)return BASE+u;}catch(e){}return u;}
 var of=window.fetch?window.fetch.bind(window):null;if(of){window.fetch=function(input,init){if(typeof input==="string")return of(fix(input),init);if(input&&input.url){try{var u=new URL(input.url);if(u.origin===location.origin&&u.pathname.charAt(0)==="/"&&u.pathname.indexOf(BASE+"/")!==0){return of(BASE+u.pathname+u.search,init);}}catch(e){}}return of(input,init);};}
 var ox=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,url){if(typeof url==="string")arguments[1]=fix(url);return ox.apply(this,arguments);};
 if(window.EventSource){var oes=window.EventSource;window.EventSource=function(u,o){return new oes(fix(u),o);};}
-})();</script>`;
+function memStore(){var m={};return{get length(){return Object.keys(m).length;},key:function(i){return Object.keys(m)[i]||null;},getItem:function(k){return k in m?m[k]:null;},setItem:function(k,v){m[k]=String(v);},removeItem:function(k){delete m[k];},clear:function(){m={};}};}
+try{if(self.origin==="null"){try{void window.localStorage.getItem("x");}catch(e){Object.defineProperty(window,"localStorage",{value:memStore()});Object.defineProperty(window,"sessionStorage",{value:memStore()});}try{void document.cookie;}catch(e){Object.defineProperty(document,"cookie",{get:function(){return"";},set:function(){}});}}}
+catch(e){}
+if(window.self!==window.top){var report=function(msg){try{window.top.postMessage({__atomsPreviewError:String(msg).slice(0,500)},"*");}catch(e){}};window.addEventListener("error",function(e){report((e.message||"")+" @ "+(e.filename||"")+":"+(e.lineno||""));},true);window.addEventListener("unhandledrejection",function(e){report("unhandledrejection: "+((e.reason&&e.reason.message)||e.reason));});try{window.top.postMessage({__atomsPreviewReady:location.pathname},"*");}catch(e){}}} )();</script>`;
 }
 
 /** 重写 HTML 中的根绝对路径引用（src/href/action="/x" → prefix + "/x"），注入 base 与垫片 */

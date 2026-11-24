@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { ChatView } from "@/components/chat/chat-view";
+import { previewToken } from "@/lib/preview-token";
 
 export default async function ChatPage({
   params,
@@ -28,6 +29,7 @@ export default async function ChatPage({
     <ChatView
       projectId={project.id}
       projectTitle={project.title}
+      previewToken={previewToken(project.id)}
       initialStatus={project.status}
       hasVersion={project.currentVersionId !== null}
       initialPublishedSlug={project.publishedSlug}

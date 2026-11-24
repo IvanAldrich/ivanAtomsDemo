@@ -26,6 +26,7 @@ function stepIndex(stage: string | null): number {
 export function ChatView({
   projectId,
   projectTitle,
+  previewToken,
   initialMessages,
   initialStatus,
   hasVersion,
@@ -33,6 +34,7 @@ export function ChatView({
 }: {
   projectId: string;
   projectTitle: string;
+  previewToken: string;
   initialMessages: ChatMessage[];
   initialStatus: string;
   hasVersion: boolean;
@@ -247,7 +249,13 @@ export function ChatView({
       : "";
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-3.5rem)] max-w-5xl flex-col px-4">
+    <div
+      className={
+        tab === "preview"
+          ? "flex h-[calc(100vh-3.5rem)] w-full flex-col px-4"
+          : "mx-auto flex h-[calc(100vh-3.5rem)] max-w-5xl flex-col px-4"
+      }
+    >
       <div className="flex items-center gap-3 border-b border-neutral-200 py-3">
         <Link
           href="/dashboard"
@@ -344,7 +352,7 @@ export function ChatView({
                 )}
                 <iframe
                   key={iframeKey}
-                  src={`/preview/${projectId}/`}
+                  src={`/preview/${projectId}/${previewToken}/`}
                   sandbox="allow-scripts allow-forms allow-popups"
                   onLoad={() => setIframeLoading(false)}
                   className={

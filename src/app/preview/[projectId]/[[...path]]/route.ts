@@ -2,23 +2,35 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { proxyToRuntime } from "@/lib/proxy";
 import { runtimeManager } from "@/lib/runtime/manager";
+import { previewToken } from "@/lib/preview-token";
 
-/** 属主专享预览代理（App Viewer 使用，无需发布） */
+/**
+ * 属主专享预览代理（App Viewer 使用，无需发布）。
+ * 鉴权：会话 Cookie（直接访问）或 URL 令牌（沙箱 iframe 子资源不携带 Cookie）。
+ */
 async function handle(
   req: Request,
   { params }: { params: Promise<{ projectId: string; path?: string[] }> }
 ) {
-  const { projectId, path } = await params;
+  const { projectId, path: rawPath } = await params;
+  const expectedToken = previewToken(projectId);
+
+  const path = rawPath ?? [];
+  const tokenInPath = path[0] === expectedToken ? path.slice(1) : path;
+  const hasValidToken = path[0] === expectedToken;
 
   const session = await getSession();
-  if (!session) return new Response("unauthorized", { status: 401 });
-
   const project = await prisma.project.findUnique({
     where: { id: projectId },
   });
-  if (!project || project.ownerId !== session.uid) {
-    return new Response("not found", { status: 404 });
+
+  const ownsBySession = Boolean(
+    session && project && project.ownerId === session.uid
+  );
+  if (!ownsBySession && !hasValidToken) {
+    return new Response("unauthorized", { status: 401 });
   }
+  if (!project) return new Response("not found", { status: 404 });
 
   // 预览前按需拉起当前版本运行时（冷启动可能耗时数秒）
   if (!runtimeManager.isRunning(projectId) && project.currentVersionId) {
@@ -28,8 +40,10 @@ async function handle(
     if (!ok) return new Response("preview runtime failed to start", { status: 503 });
   }
 
-  const subPath = "/" + (path ?? []).map(encodeURIComponent).join("/");
-  return proxyToRuntime(req, projectId, subPath, `/preview/${projectId}`);
+  const subPath = "/" + tokenInPath.map(encodeURIComponent).join("/");
+  // 始终使用令牌前缀，保证 HTML 内部子资源（无 Cookie）也能通过鉴权
+  const prefix = `/preview/${projectId}/${expectedToken}`;
+  return proxyToRuntime(req, projectId, subPath, prefix);
 }
 
 export {
