@@ -25,6 +25,33 @@ export async function latestSnapshot(projectId: string): Promise<string | null> 
   return path.join(snapshotsRoot, `v${max}`);
 }
 
+/** 快照 GC：仅保留最新 N 个版本目录（防止磁盘无界增长） */
+export async function gcSnapshots(projectId: string, keep = 3): Promise<number> {
+  const snapshotsRoot = path.join(
+    process.cwd(),
+    "storage",
+    "projects",
+    projectId,
+    "snapshots"
+  );
+  let entries: string[];
+  try {
+    entries = await readdir(snapshotsRoot);
+  } catch {
+    return 0;
+  }
+  const versions = entries
+    .map((e) => ({ name: e, n: Number(/^v(\d+)$/.exec(e)?.[1] ?? NaN) }))
+    .filter((v) => Number.isInteger(v.n))
+    .sort((a, b) => b.n - a.n);
+  let removed = 0;
+  for (const v of versions.slice(keep)) {
+    await rm(path.join(snapshotsRoot, v.name), { recursive: true, force: true });
+    removed += 1;
+  }
+  return removed;
+}
+
 export async function readTree(dir: string): Promise<string[]> {
   const out: string[] = [];
   async function walk(cur: string) {

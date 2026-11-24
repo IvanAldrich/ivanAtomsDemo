@@ -27,8 +27,45 @@ export type ChatMessageInput = {
   content: string;
 };
 
-/** 流式补全：逐块回调文本增量（与推理增量）。返回完整文本与结束原因 */
+/** 流式补全：逐块回调文本增量（与推理增量）。返回完整文本与结束原因。
+ *  瞬时错误（限流/5xx/连接失败）在「尚未产生输出」时自动重试（指数退避）。
+ */
 export async function streamChat(
+  messages: ChatMessageInput[],
+  onDelta: (text: string) => void,
+  onReasoning?: (text: string) => void
+): Promise<{ text: string; finishReason: string | null }> {
+  const MAX_ATTEMPTS = 3;
+  const state = { emitted: false };
+  const wrappedDelta = (t: string) => {
+    state.emitted = true;
+    onDelta(t);
+  };
+
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await streamOnce(messages, wrappedDelta, onReasoning);
+    } catch (err) {
+      // 已产生部分输出时不重试（避免重复增量污染），交给上层修复循环
+      if (state.emitted || attempt >= MAX_ATTEMPTS || !isTransient(err)) {
+        throw err;
+      }
+      await new Promise((r) => setTimeout(r, 1500 * attempt));
+    }
+  }
+}
+
+function isTransient(err: unknown): boolean {
+  if (err instanceof OpenAI.APIConnectionError) return true;
+  if (err instanceof OpenAI.APIError) {
+    const status = (err as { status?: number }).status;
+    return !status || status === 429 || status >= 500;
+  }
+  const msg = err instanceof Error ? err.message : "";
+  return /fetch failed|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg);
+}
+
+async function streamOnce(
   messages: ChatMessageInput[],
   onDelta: (text: string) => void,
   onReasoning?: (text: string) => void

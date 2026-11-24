@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { llmConfigured } from "@/lib/llm";
 import { generateFirstRound, generateRepairRound } from "./generator";
 import {
+  gcSnapshots,
   latestSnapshot,
   readTree,
   selectKeyFiles,
@@ -247,6 +248,8 @@ export async function runBuildRound(
         where: { id: job.projectId },
         data: { currentVersionId: version.id, updatedAt: new Date() },
       });
+      // 磁盘治理：保留最新 3 个版本快照（含 node_modules 的旧快照是磁盘增长主因）
+      await gcSnapshots(job.projectId, 3).catch(() => 0);
 
       summary = [
         `工程快照 v${round} 已通过沙箱构建与启动验证：`,

@@ -137,6 +137,33 @@ class RuntimeManager {
     return { port: staged.port };
   }
 
+  /** 清理上次进程遗留的孤儿运行时（run.json 记录 pid，进程组整体终止） */
+  async cleanupOrphanedProcesses(): Promise<number> {
+    const { readdir } = await import("node:fs/promises");
+    const projectsRoot = path.join(process.cwd(), "storage", "projects");
+    let dirs: string[] = [];
+    try {
+      dirs = await readdir(projectsRoot);
+    } catch {
+      return 0;
+    }
+    let killed = 0;
+    for (const id of dirs) {
+      if (this.entries.has(id)) continue;
+      const run = await readRunFile(id);
+      const pid = Number(run?.pid);
+      if (!Number.isInteger(pid) || pid <= 1) continue;
+      try {
+        process.kill(-pid, "SIGKILL"); // 进程组（spawnRuntime 以 detached 创建）
+        killed += 1;
+      } catch {
+        /* 已不存在 */
+      }
+      // 保留 run.json：recover() 依赖它判断该项目曾处于发布运行状态
+    }
+    return killed;
+  }
+
   /** 宿主重启后的 best-effort 恢复：按 run.json 重启已发布项目 */
   async recover(): Promise<string[]> {
     const recovered: string[] = [];

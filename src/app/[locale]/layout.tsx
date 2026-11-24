@@ -3,6 +3,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { ensureBoot } from "@/lib/boot";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -37,6 +38,7 @@ export default async function LocaleLayout({
     notFound();
   }
   setRequestLocale(locale);
+  void ensureBoot();
 
   return (
     <html lang={locale}>
