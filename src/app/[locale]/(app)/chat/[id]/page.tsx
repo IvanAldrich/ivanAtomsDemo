@@ -31,7 +31,7 @@ export default async function ChatPage({
       projectTitle={project.title}
       previewToken={previewToken(project.id)}
       initialStatus={project.status}
-      hasVersion={project.currentVersionId !== null}
+      initialHasVersion={project.currentVersionId !== null}
       initialPublishedSlug={project.publishedSlug}
       initialMessages={messages.map((m) => ({
         id: m.id,

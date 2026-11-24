@@ -157,7 +157,8 @@
       "success": "构建完成",
       "failed": "构建失败"
     },
-    "updateLive": "更新上线"
+    "updateLive": "更新上线",
+    "previewBuilding": "构建进行中，完成后即可在此预览。"
   },
   "footer": {
     "product": "产品",

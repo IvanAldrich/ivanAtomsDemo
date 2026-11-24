@@ -157,7 +157,8 @@
       "success": "Build finished",
       "failed": "Build failed"
     },
-    "updateLive": "Update live"
+    "updateLive": "Update live",
+    "previewBuilding": "Build in progress — you can preview as soon as it finishes."
   },
   "footer": {
     "product": "Product",

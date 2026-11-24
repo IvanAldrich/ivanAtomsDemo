@@ -29,7 +29,7 @@ export function ChatView({
   previewToken,
   initialMessages,
   initialStatus,
-  hasVersion,
+  initialHasVersion,
   initialPublishedSlug,
 }: {
   projectId: string;
@@ -37,11 +37,13 @@ export function ChatView({
   previewToken: string;
   initialMessages: ChatMessage[];
   initialStatus: string;
-  hasVersion: boolean;
+  initialHasVersion: boolean;
   initialPublishedSlug: string | null;
 }) {
   const t = useTranslations("chat");
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  // 版本可用性必须响应式：构建进行中打开页面时初始为 false，构建成功后即刻可预览/发布
+  const [hasVersion, setHasVersion] = useState(initialHasVersion);
   const [input, setInput] = useState("");
   const [stage, setStage] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
@@ -79,6 +81,7 @@ export function ChatView({
       setMessages(data.messages);
       const lastUser = [...data.messages].reverse().find((m) => m.role === "user");
       if (!lastUser || !IN_FLIGHT.has(lastUser.buildStatus ?? "")) {
+        if (lastUser?.buildStatus === "success") setHasVersion(true);
         setStage(null);
         setElapsed(null);
         clearInterval(timer);
@@ -129,7 +132,10 @@ export function ChatView({
           }
           if (ev.type === "stage") {
             setStage(ev.stage);
-            if (ev.stage === "success" || ev.stage === "failed") {
+            if (ev.stage === "success") {
+              setHasVersion(true);
+              await refreshMessages();
+            } else if (ev.stage === "failed") {
               await refreshMessages();
             }
           } else if (ev.type === "log") {
@@ -305,7 +311,9 @@ export function ChatView({
           {!hasVersion ? (
             <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
               <p className="text-sm text-neutral-500">
-                {t("previewUnavailable")}
+                {sending || (stage !== null && IN_FLIGHT.has(stage))
+                  ? t("previewBuilding")
+                  : t("previewUnavailable")}
               </p>
             </div>
           ) : (
