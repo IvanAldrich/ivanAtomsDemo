@@ -32,12 +32,20 @@ async function handle(
   }
   if (!project) return new Response("not found", { status: 404 });
 
-  // 预览前按需拉起当前版本运行时（冷启动可能耗时数秒）
-  if (!runtimeManager.isRunning(projectId) && project.currentVersionId) {
-    const ok = await runtimeManager
-      .start(projectId, project.currentVersionId)
-      .catch(() => null);
-    if (!ok) return new Response("preview runtime failed to start", { status: 503 });
+  // 预览必须跟随当前版本：未运行则启动；运行的是旧版本则原子替换（修复预览长期服务旧构建的问题）
+  if (project.currentVersionId) {
+    const runningVersion = runtimeManager.versionFor(projectId);
+    if (
+      !runtimeManager.isRunning(projectId) ||
+      runningVersion !== project.currentVersionId
+    ) {
+      const ok = await runtimeManager
+        .start(projectId, project.currentVersionId)
+        .catch(() => null);
+      if (!ok) {
+        return new Response("preview runtime failed to start", { status: 503 });
+      }
+    }
   }
 
   const subPath = "/" + tokenInPath.map(encodeURIComponent).join("/");
