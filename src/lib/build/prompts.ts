@@ -14,20 +14,28 @@ export const RUNTIME_CONTRACT = `
 
 # 输出协议（唯一允许的输出格式）
 
-先一句简短说明，然后逐文件输出，格式严格如下：
+先一句简短说明，然后按需输出以下三种块：
 
+1) 整文件（新文件或大重构）：
 ### FILE: package.json
 \`\`\`json
 { ...完整文件内容... }
 \`\`\`
 
-### FILE: server.js
-\`\`\`js
-// 完整文件内容
-\`\`\`
+2) 增量修改（迭代首选，为节省 token 与避免重写大文件）：
+### EDIT: public/app.js
+<<<<<<< SEARCH
+（旧代码片段，必须与现有文件逐字符一致）
+=======
+（替换后的新代码片段）
+>>>>>>> REPLACE
 
-依此类推。需要删除文件时单独一行：### DELETE: 相对路径
-每个文件必须是完整内容（不是 diff/片段）。`;
+3) 删除文件：
+### DELETE: 相对路径
+
+规则：FILE 块必须是完整内容；EDIT 的 SEARCH 必须精确匹配现有文件（含缩进；
+一次可包含多个 SEARCH/REPLACE 块）；迭代优先使用 EDIT，仅新增文件或大面积
+重构才用 FILE；未提及的文件保持不变。`;
 
 export function buildSystemPrompt(): string {
   return `你是一位资深全栈工程师 AI，为用户构建可上线的完整产品（前端 + 后端 + 数据持久化）。
@@ -85,7 +93,8 @@ ${requirement}
 
 注意：先判断这条消息的性质——
 - 若是提问/讨论（如「完成了吗」）：直接简短回答，不要输出文件
-- 若是构建/修改需求：按输出协议输出需要新增/修改的完整文件与需要删除的文件；用户点名的功能 MUST 全部实现
+- 若是修改需求：优先用 EDIT（SEARCH/REPLACE）做增量修改，仅新增文件或大面积重构用 FILE；
+  用户点名的功能 MUST 全部实现
 
 # 当前工程文件树
 ${tree}
@@ -94,6 +103,44 @@ ${tree}
 ${contents || "（无注入）"}
 
 未提及的文件保持不变（已有 package.json 时无需重发）。`;
+}
+
+/** 两阶段生成 · 阶段一：只输出文件清单（省 token，避免与内容挤在一次输出里） */
+export function buildPlanPrompt(requirement: string): string {
+  return `用户需求：
+${requirement}
+
+请只输出本工程的实现计划（不要输出任何代码或文件内容）：
+第一行给出工程整体方案一句话；然后每行一个文件，格式：
+- 路径 — 该文件职责
+路径使用相对路径（如 package.json、server.js、public/index.html、data/db.json）。
+文件数控制在 4–12 个。`;
+}
+
+/** 两阶段生成 · 阶段二：只生成单个文件的完整内容 */
+export function buildSingleFilePrompt(
+  requirement: string,
+  planLines: string[],
+  targetPath: string,
+  priorFiles: Array<{ path: string; content: string }>
+): string {
+  const plan = planLines.map((l) => `- ${l}`).join("\n");
+  const prior = priorFiles
+    .map((f) => `### 已生成文件 ${f.path}\n\`\`\`\n${f.content.slice(0, 12000)}\n\`\`\``)
+    .join("\n\n");
+  return `工程需求：
+${requirement}
+
+# 工程文件计划
+${plan}
+
+${prior ? `# 已生成的文件（保持接口/命名一致）\n${prior}\n` : ""}
+现在**只输出文件 ${targetPath} 的完整内容**，格式：
+### FILE: ${targetPath}
+\`\`\`语言
+完整内容
+\`\`\`
+只输出这一个文件块，不要输出其他文件。`;
 }
 
 export function buildRepairPrompt(input: {

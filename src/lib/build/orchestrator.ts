@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { llmConfigured } from "@/lib/llm";
-import { generateFirstRound, generateRepairRound } from "./generator";
+import {
+  generateFirstRound,
+  generateProjectTwoPhase,
+  generateRepairRound,
+} from "./generator";
 import {
   gcSnapshots,
   latestSnapshot,
@@ -115,18 +119,24 @@ export async function runBuildRound(
 
         try {
           if (attempt === 1) {
-            const gen = await generateFirstRound(
-              message.content,
-              ctx,
-              (text) => emit({ type: "log", text })
-            );
+            // 新项目首轮：两阶段逐文件生成（规避单次输出上限）
+            const gen = baseDir
+              ? await generateFirstRound(
+                  message.content,
+                  ctx,
+                  (text) => emit({ type: "log", text })
+                )
+              : await generateProjectTwoPhase(message.content, (text) =>
+                  emit({ type: "log", text })
+                );
             lastRaw = gen.raw;
 
-            // 对话式消息：迭代轮中模型无文件输出且给了文字回答 → 直接回复，不构建
+            // 对话式消息：迭代轮中模型无任何文件/编辑动作且给了文字回答 → 直接回复，不构建
             const conversational =
               ctx !== null &&
               gen.plan.files.length === 0 &&
               gen.plan.deletes.length === 0 &&
+              gen.plan.edits.length === 0 &&
               gen.raw.trim().length > 0;
             if (conversational) {
               const reply = gen.raw.trim().slice(0, 4000);

@@ -47,12 +47,17 @@ npm run build && npm run start   # 生产
 ```
 用户 → 首页/对话（Next.js App Router，zh/en）
   └─ 消息入队（全局并发 1）→ SSE 流式反馈
-       ├─ 自由生成（LLM，文件协议 ### FILE/DELETE）→ 工程快照 snapshots/v{n}
-       ├─ 沙箱构建：npm install → build → 启动验证（受限子进程：净化环境/ulimit/超时）
-       ├─ 自修复循环：错误尾部回传 LLM 修复，上限 5 轮
-       └─ 版本落账 app_versions（仅构建成功）
+       ├─ 生成（三层策略规避输出长度上限）
+       │   ├─ 新项目：两阶段 —— 先计划文件清单，再逐文件独立生成（各自 token 预算）
+       │   ├─ 迭代：单次调用，优先 SEARCH/REPLACE 增量编辑（EDIT 块），
+       │   │        新增/大重构才整文件（FILE 块）
+       │   └─ 兜底：finish_reason=length → 断点续写（×3）
+       ├─ 沙箱构建：语法校验 → npm install → build → 启动验证 → 资源冒烟
+       ├─ 自修复循环：错误尾部 + 原始需求回传（优先用 EDIT 修复），上限 5 轮
+       └─ 版本落账 app_versions（仅全部门禁通过）
   └─ 发布：nanoid slug + 独立运行时进程（端口分配 + run.json 恢复）
-       └─ 反向代理 /p/{slug}（匿名公开）· /preview/{projectId}（属主 App Viewer）
+       └─ 反向代理 /p/{slug}（匿名公开）· /preview/{projectId}（属主 App Viewer，
+            签名令牌鉴权，随构建版本自动切换）
            迭代 → 重建 → swap 原子上线（失败回滚旧版本）
 ```
 

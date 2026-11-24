@@ -33,7 +33,8 @@ export type ChatMessageInput = {
 export async function streamChat(
   messages: ChatMessageInput[],
   onDelta: (text: string) => void,
-  onReasoning?: (text: string) => void
+  onReasoning?: (text: string) => void,
+  opts: { maxTokens?: number } = {}
 ): Promise<{ text: string; finishReason: string | null }> {
   const MAX_ATTEMPTS = 3;
   const state = { emitted: false };
@@ -44,7 +45,7 @@ export async function streamChat(
 
   for (let attempt = 1; ; attempt++) {
     try {
-      return await streamOnce(messages, wrappedDelta, onReasoning);
+      return await streamOnce(messages, wrappedDelta, onReasoning, opts);
     } catch (err) {
       // 已产生部分输出时不重试（避免重复增量污染），交给上层修复循环
       if (state.emitted || attempt >= MAX_ATTEMPTS || !isTransient(err)) {
@@ -68,15 +69,16 @@ function isTransient(err: unknown): boolean {
 async function streamOnce(
   messages: ChatMessageInput[],
   onDelta: (text: string) => void,
-  onReasoning?: (text: string) => void
+  onReasoning?: (text: string) => void,
+  opts: { maxTokens?: number } = {}
 ): Promise<{ text: string; finishReason: string | null }> {
   const stream = await getClient().chat.completions.create({
     model: llmModel(),
     messages,
     stream: true,
     temperature: 0.2,
-    // 整工程自由生成需要大输出；超限时由生成器做断点续写
-    max_tokens: Number(process.env.LLM_MAX_OUTPUT_TOKENS ?? 16384),
+    max_tokens:
+      opts.maxTokens ?? Number(process.env.LLM_MAX_OUTPUT_TOKENS ?? 16384),
   });
 
   let full = "";

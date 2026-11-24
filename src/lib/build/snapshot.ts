@@ -77,12 +77,17 @@ export async function readTree(dir: string): Promise<string[]> {
 
 /**
  * 将生成计划写入快照：基线与目标不同则先拷贝基线再应用；
- * 基线与目标相同（原地修复）时不做清空，仅应用写入/删除。
+ * 基线与目标相同（原地修复）时不做清空，仅应用写入/编辑/删除。
+ * EDIT 采用 SEARCH/REPLACE：先精确匹配，失败时按行尾空白容忍匹配。
  */
 export async function writeSnapshot(
   baseDir: string | null,
   targetDir: string,
-  plan: { files: Array<{ path: string; content: string }>; deletes: string[] }
+  plan: {
+    files: Array<{ path: string; content: string }>;
+    edits?: Array<{ path: string; search: string; replace: string }>;
+    deletes: string[];
+  }
 ) {
   if (baseDir !== targetDir) {
     await rm(targetDir, { recursive: true, force: true });
@@ -100,9 +105,55 @@ export async function writeSnapshot(
     await mkdir(path.dirname(dest), { recursive: true });
     await writeFile(dest, f.content, "utf8");
   }
+  for (const e of plan.edits ?? []) {
+    const dest = path.join(targetDir, e.path);
+    let current: string;
+    try {
+      current = await readFile(dest, "utf8");
+    } catch {
+      throw new Error(`EDIT 目标文件不存在：${e.path}`);
+    }
+    const next = applySearchReplace(current, e.search, e.replace);
+    if (next === null) {
+      throw new Error(
+        `EDIT 失败：在 ${e.path} 中找不到 SEARCH 片段（需与现有文件逐字符一致）。SEARCH 开头：\n${e.search.slice(0, 200)}`
+      );
+    }
+    await writeFile(dest, next, "utf8");
+  }
   for (const d of plan.deletes) {
     await rm(path.join(targetDir, d), { force: true });
   }
+}
+
+/** SEARCH/REPLACE 应用：精确 → 行尾空白容忍（未匹配行保持原样） */
+function applySearchReplace(
+  content: string,
+  search: string,
+  replace: string
+): string | null {
+  if (content.includes(search)) {
+    return content.replace(search, replace);
+  }
+  const contentLines = content.split("\n");
+  const searchLines = search.split("\n").map((l) => l.trimEnd());
+  for (let i = 0; i + searchLines.length <= contentLines.length; i++) {
+    let match = true;
+    for (let j = 0; j < searchLines.length; j++) {
+      if (contentLines[i + j].trimEnd() !== searchLines[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) {
+      return [
+        ...contentLines.slice(0, i),
+        ...replace.split("\n"),
+        ...contentLines.slice(i + searchLines.length),
+      ].join("\n");
+    }
+  }
+  return null;
 }
 
 /** 组装迭代上下文的「关键文件」：package.json 优先，其余按小文件优先，总量截断 */
