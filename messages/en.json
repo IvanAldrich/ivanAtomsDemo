@@ -33,19 +33,33 @@
         "name": "Free",
         "monthlyPrice": "$0",
         "annualPrice": "$0",
-        "features": ["3 builds per day", "Single project concurrency", "Community support"]
+        "features": [
+          "3 builds per day",
+          "Single project concurrency",
+          "Community support"
+        ]
       },
       "pro": {
         "name": "Pro",
         "monthlyPrice": "$12",
         "annualPrice": "$9.6",
-        "features": ["Unlimited builds", "5-round self-repair", "Public URL publishing", "Email support"]
+        "features": [
+          "Unlimited builds",
+          "5-round self-repair",
+          "Public URL publishing",
+          "Email support"
+        ]
       },
       "max": {
         "name": "Max",
         "monthlyPrice": "$49",
         "annualPrice": "$39",
-        "features": ["Everything in Pro", "Priority queue", "Advanced models", "Dedicated support"]
+        "features": [
+          "Everything in Pro",
+          "Priority queue",
+          "Advanced models",
+          "Dedicated support"
+        ]
       }
     },
     "faqs": [
@@ -142,7 +156,8 @@
       "repairing": "Auto-repairing",
       "success": "Build finished",
       "failed": "Build failed"
-    }
+    },
+    "updateLive": "Update live"
   },
   "footer": {
     "product": "Product",

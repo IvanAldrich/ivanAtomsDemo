@@ -9,6 +9,7 @@ import {
 } from "./snapshot";
 import { snapshotDir } from "@/lib/storage";
 import { runSandboxedBuild } from "./builder";
+import { reviewRequirements } from "./reviewer";
 import { isolationLevel, isolationNotice } from "./executor";
 import { validatePlan } from "./protocol";
 
@@ -193,15 +194,38 @@ export async function runBuildRound(
         const outcome = await runSandboxedBuild(candidate, (l) =>
           emit({ type: "log", text: l })
         );
-        if (outcome.ok) {
-          buildOk = true;
-          break;
+        if (!outcome.ok) {
+          lastError = outcome.errorTail;
+          emit({
+            type: "log",
+            text: `第 ${attempt} 次构建失败，错误尾部：\n${lastError.slice(-600)}`,
+          });
+          continue;
         }
-        lastError = outcome.errorTail;
-        emit({
-          type: "log",
-          text: `第 ${attempt} 次构建失败，错误尾部：\n${lastError.slice(-600)}`,
-        });
+
+        // L4 需求自检：构建通过 ≠ 需求满足（可 LLM_REVIEW=off 关闭）
+        if (process.env.LLM_REVIEW !== "off" && process.env.LLM_REVIEW !== "false") {
+          emit({ type: "log", text: "验收自检：对照需求核对功能覆盖…" });
+          try {
+            const review = await reviewRequirements(message.content, candidate);
+            if (!review.pass) {
+              lastError = `需求覆盖检查未通过：${review.feedback}`;
+              emit({ type: "log", text: lastError });
+              continue;
+            }
+            emit({ type: "log", text: "验收自检通过" });
+          } catch (err) {
+            emit({
+              type: "log",
+              text: `（验收自检调用失败，本次跳过：${
+                err instanceof Error ? err.message : "unknown"
+              }）`,
+            });
+          }
+        }
+
+        buildOk = true;
+        break;
       }
 
       if (!buildOk) {

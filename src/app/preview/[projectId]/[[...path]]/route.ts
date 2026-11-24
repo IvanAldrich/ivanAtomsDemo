@@ -29,7 +29,7 @@ async function handle(
   }
 
   const subPath = "/" + (path ?? []).map(encodeURIComponent).join("/");
-  return proxyToRuntime(req, projectId, subPath);
+  return proxyToRuntime(req, projectId, subPath, `/preview/${projectId}`);
 }
 
 export {

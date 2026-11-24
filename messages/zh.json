@@ -33,19 +33,33 @@
         "name": "免费版",
         "monthlyPrice": "¥0",
         "annualPrice": "¥0",
-        "features": ["每日 3 次构建", "单项目并发", "社区支持"]
+        "features": [
+          "每日 3 次构建",
+          "单项目并发",
+          "社区支持"
+        ]
       },
       "pro": {
         "name": "专业版",
         "monthlyPrice": "¥69",
         "annualPrice": "¥55",
-        "features": ["无限构建", "自修复 5 轮", "公开 URL 发布", "邮件支持"]
+        "features": [
+          "无限构建",
+          "自修复 5 轮",
+          "公开 URL 发布",
+          "邮件支持"
+        ]
       },
       "max": {
         "name": "旗舰版",
         "monthlyPrice": "¥299",
         "annualPrice": "¥239",
-        "features": ["全部专业版权益", "优先队列", "高级模型", "专属支持"]
+        "features": [
+          "全部专业版权益",
+          "优先队列",
+          "高级模型",
+          "专属支持"
+        ]
       }
     },
     "faqs": [
@@ -64,7 +78,8 @@
     ]
   },
   "auth": {
-    "loginTitle": "登录或注册",    "loginSubtitle": "开始使用 {brand} 创作",
+    "loginTitle": "登录或注册",
+    "loginSubtitle": "开始使用 {brand} 创作",
     "demoNotice": "演示环境：输入邮箱即可登录或注册，无需密码与验证码。请勿存放真实数据。",
     "emailLabel": "邮箱",
     "emailPlaceholder": "you@example.com",
@@ -141,7 +156,8 @@
       "repairing": "自动修复中",
       "success": "构建完成",
       "failed": "构建失败"
-    }
+    },
+    "updateLive": "更新上线"
   },
   "footer": {
     "product": "产品",

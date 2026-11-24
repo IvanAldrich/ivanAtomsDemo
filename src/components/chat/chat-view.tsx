@@ -381,6 +381,13 @@ export function ChatView({
                     {publishedSlug ? (
                       <>
                         <button
+                          onClick={publish}
+                          disabled={publishing}
+                          className="rounded-lg bg-brand-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                        >
+                          {publishing ? "…" : t("updateLive")}
+                        </button>
+                        <button
                           onClick={copyLink}
                           className="rounded-lg border border-emerald-300 bg-white px-4 py-1.5 text-sm text-emerald-700 hover:bg-emerald-100"
                         >

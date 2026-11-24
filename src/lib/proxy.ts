@@ -12,14 +12,48 @@ const HOP_BY_HOP = new Set([
   "host",
 ]);
 
+/** 注入到产物 HTML <head> 的前缀垫片：让根绝对路径的 fetch/XHR/EventSource 也能命中代理前缀 */
+function shimScript(prefix: string): string {
+  return `<script>(function(){var BASE=${JSON.stringify(prefix)};function fix(u){try{if(typeof u==="string"&&u.charAt(0)==="/"&&u.charAt(1)!=="/"&&u.indexOf(BASE+"/")!==0&&u!==BASE)return BASE+u;}catch(e){}return u;}
+var of=window.fetch?window.fetch.bind(window):null;if(of){window.fetch=function(input,init){if(typeof input==="string")return of(fix(input),init);if(input&&input.url){try{var u=new URL(input.url);if(u.origin===location.origin&&u.pathname.charAt(0)==="/"&&u.pathname.indexOf(BASE+"/")!==0){return of(BASE+u.pathname+u.search,init);}}catch(e){}}return of(input,init);};}
+var ox=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,url){if(typeof url==="string")arguments[1]=fix(url);return ox.apply(this,arguments);};
+if(window.EventSource){var oes=window.EventSource;window.EventSource=function(u,o){return new oes(fix(u),o);};}
+})();</script>`;
+}
+
+/** 重写 HTML 中的根绝对路径引用（src/href/action="/x" → prefix + "/x"），注入 base 与垫片 */
+function rewriteHtml(html: string, prefix: string): string {
+  let out = html.replace(
+    /(\s(?:src|href|action)=")\/(?!\/)/g,
+    `$1${prefix}/`
+  );
+  // 顺带处理单引号写法
+  out = out.replace(/(\s(?:src|href|action)=')\/(?!\/)/g, `$1${prefix}/`);
+  // base 统一相对路径基准（/p/{slug} 无尾斜杠时浏览器会相对父目录解析）
+  const baseTag = `<base href="${prefix}/">`;
+  const shim = shimScript(prefix);
+  const headOpen = /<head[^>]*>/i.exec(out);
+  if (headOpen) {
+    const at = headOpen.index + headOpen[0].length;
+    out = out.slice(0, at) + baseTag + shim + out.slice(at);
+  } else if (/<html[^>]*>/i.test(out)) {
+    out = out.replace(/<html[^>]*>/i, (m) => m + baseTag + shim);
+  } else {
+    out = baseTag + shim + out;
+  }
+  return out;
+}
+
 /**
  * 纯 fetch 反向代理：将请求透传到项目运行时端口（targetPath 已剥离平台前缀）。
+ * HTML 响应会重写根绝对路径并注入前缀垫片，使产物在路径前缀托管下正常工作。
  * 注意：不支持 WebSocket 升级（demo 已知限制）。
  */
 export async function proxyToRuntime(
   req: Request,
   projectId: string,
-  targetPath: string
+  targetPath: string,
+  prefix: string
 ): Promise<Response> {
   const port = runtimeManager.portFor(projectId);
   if (!port) {
@@ -45,10 +79,17 @@ export async function proxyToRuntime(
 
   try {
     const upstream = await fetch(target, init);
+    const contentType = upstream.headers.get("content-type") ?? "";
+    const isHtml = contentType.includes("text/html");
+
     const respHeaders = new Headers();
     upstream.headers.forEach((value, key) => {
       const lower = key.toLowerCase();
-      if (!HOP_BY_HOP.has(lower) && lower !== "content-encoding") {
+      if (
+        !HOP_BY_HOP.has(lower) &&
+        lower !== "content-encoding" &&
+        !(isHtml && lower === "content-length")
+      ) {
         respHeaders.set(key, value);
       }
     });
@@ -65,6 +106,15 @@ export async function proxyToRuntime(
     if (req.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: respHeaders });
     }
+
+    if (isHtml && req.method !== "HEAD") {
+      const html = await upstream.text();
+      return new Response(rewriteHtml(html, prefix), {
+        status: upstream.status,
+        headers: respHeaders,
+      });
+    }
+
     return new Response(upstream.body, {
       status: upstream.status,
       headers: respHeaders,

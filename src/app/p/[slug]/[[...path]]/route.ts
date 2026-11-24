@@ -24,7 +24,7 @@ async function handle(
   }
 
   const subPath = "/" + (path ?? []).map(encodeURIComponent).join("/");
-  return proxyToRuntime(req, project.id, subPath);
+  return proxyToRuntime(req, project.id, subPath, `/p/${slug}`);
 }
 
 export {
