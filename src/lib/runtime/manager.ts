@@ -1,30 +1,49 @@
-import { readFile, writeFile, rm } from "node:fs/promises";
+import { readFile, writeFile, rename, rm, mkdir } from "node:fs/promises";
 import path from "node:path";
-import type { ChildProcess } from "node:child_process";
 import { prisma } from "@/lib/prisma";
-import { spawnRuntime } from "@/lib/build/executor";
-import { killTree } from "@/lib/build/builder";
+import {
+  cleanupOrphanContainers,
+  isolationLevel,
+  startRuntime,
+  stopRuntime,
+  type RuntimeHandle,
+} from "@/lib/build/executor";
 import { waitForPort, pickFreePort } from "@/lib/ports";
 import { projectRoot } from "@/lib/storage";
 
 type RuntimeEntry = {
   projectId: string;
-  child: ChildProcess;
-  port: number;
   versionId: string;
+  handle: RuntimeHandle;
 };
 
 const globalForRuntime = globalThis as unknown as {
   __runtimeManager?: RuntimeManager;
 };
 
-const START_TIMEOUT = 30 * 1000;
+const START_TIMEOUT = 45 * 1000;
 
 class RuntimeManager {
   private entries = new Map<string, RuntimeEntry>();
+  private busy = new Map<string, Promise<unknown>>();
+
+  /** 同一项目的 start/stop/swap 串行化，避免并发请求产生双容器 */
+  private serialize<T>(projectId: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.busy.get(projectId) ?? Promise.resolve();
+    const next = prev.catch(() => undefined).then(fn);
+    this.busy.set(projectId, next);
+    void next.finally(() => {
+      if (this.busy.get(projectId) === next) this.busy.delete(projectId);
+    });
+    return next;
+  }
+
+  hostFor(projectId: string): string | null {
+    return this.entries.get(projectId)?.handle.host ?? null;
+  }
 
   portFor(projectId: string): number | null {
-    return this.entries.get(projectId)?.port ?? null;
+    return this.entries.get(projectId)?.handle.port ?? null;
   }
 
   versionFor(projectId: string): string | null {
@@ -35,8 +54,12 @@ class RuntimeManager {
     return this.entries.has(projectId);
   }
 
-  /** 启动进程（不注册路由）：暂存用 */
-  private async startProcess(
+  isolation(): Promise<{ level: "process" | "container"; degraded: boolean }> {
+    return isolationLevel();
+  }
+
+  /** 启动运行时（不注册路由）：暂存用 */
+  private async startHandle(
     projectId: string,
     versionId: string
   ): Promise<RuntimeEntry | null> {
@@ -45,99 +68,128 @@ class RuntimeManager {
     });
     if (!version || version.projectId !== projectId) return null;
 
-    const port = await pickFreePort();
+    const iso = await isolationLevel();
+    const port = iso.level === "container" ? 3000 : await pickFreePort();
     const logFile = path.join(projectRoot(projectId), "runtime.log");
-    const child = spawnRuntime("npm", ["start"], {
-      cwd: version.snapshotDir,
-      env: { PORT: String(port) },
-      onLog: (line) => {
-        void (async () => {
-          const { appendFile } = await import("node:fs/promises");
-          await appendFile(logFile, line + "\n").catch(() => {});
-        })();
-      },
-    });
+    const appendLog = (line: string) => {
+      void (async () => {
+        const { appendFile } = await import("node:fs/promises");
+        await appendFile(logFile, line + "\n").catch(() => {});
+      })();
+    };
 
-    const entry: RuntimeEntry = { projectId, child, port, versionId };
-    const ready = await waitForPort("127.0.0.1", port, START_TIMEOUT);
-    if (!ready) {
-      killTree(child);
-      return null;
-    }
-    return entry;
-  }
-
-  private async register(entry: RuntimeEntry) {
-    this.entries.set(entry.projectId, entry);
-    entry.child.on("exit", () => {
-      if (this.entries.get(entry.projectId)?.child === entry.child) {
-        this.entries.delete(entry.projectId);
+    let handle: RuntimeHandle | null = null;
+    const entryProbe = () => {
+      const current = this.entries.get(projectId);
+      if (handle && current?.handle === handle) {
+        this.entries.delete(projectId);
+        void stopRuntime(handle).catch(() => undefined);
         void prisma.project
           .update({
-            where: { id: entry.projectId },
+            where: { id: projectId },
             data: { runtimeStatus: "crashed", port: null },
           })
           .catch(() => {});
       }
-    });
+    };
+
+    let started: RuntimeHandle;
+    try {
+      started = await startRuntime("npm", ["start"], {
+        cwd: version.snapshotDir,
+        port,
+        env: { PORT: String(port) },
+        isolation: iso.level,
+        onLog: appendLog,
+        name: `atoms-runtime-${projectId}-${versionId}`,
+        onExit: entryProbe,
+      });
+      handle = started;
+    } catch (err) {
+      appendLog(`[runtime] start failed: ${err instanceof Error ? err.message : err}`);
+      return null;
+    }
+
+    const ready = await waitForPort(started.host, started.port, START_TIMEOUT);
+    if (!ready) {
+      appendLog(`[runtime] port ${started.host}:${started.port} not ready`);
+      await stopRuntime(started).catch(() => undefined);
+      return null;
+    }
+    return { projectId, versionId, handle: started };
+  }
+
+  private async register(entry: RuntimeEntry) {
+    this.entries.set(entry.projectId, entry);
     await prisma.project
       .update({
         where: { id: entry.projectId },
-        data: { runtimeStatus: "running", port: entry.port },
+        data: { runtimeStatus: "running", port: entry.handle.port },
       })
       .catch(() => {});
     await writeRunFile(entry.projectId, {
-      port: entry.port,
+      kind: entry.handle.kind,
+      port: entry.handle.port,
+      host: entry.handle.host,
       versionId: entry.versionId,
-      pid: entry.child.pid,
+      containerId:
+        entry.handle.kind === "container" ? entry.handle.containerId : undefined,
+      name: entry.handle.kind === "container" ? entry.handle.name : undefined,
+      pid: entry.handle.kind === "process" ? entry.handle.child.pid : undefined,
       startedAt: new Date().toISOString(),
     });
   }
 
   /** 启动指定版本运行时（同版本幂等；不同版本直接替换） */
   async start(projectId: string, versionId: string): Promise<{ port: number } | null> {
-    const cur = this.entries.get(projectId);
-    if (cur?.versionId === versionId) return { port: cur.port };
-    const entry = await this.startProcess(projectId, versionId);
-    if (!entry) return null;
-    if (cur) killTree(cur.child);
-    await this.register(entry);
-    return { port: entry.port };
+    return this.serialize(projectId, async () => {
+      const cur = this.entries.get(projectId);
+      if (cur?.versionId === versionId) return { port: cur.handle.port };
+      const entry = await this.startHandle(projectId, versionId);
+      if (!entry) return null;
+      if (cur) await stopRuntime(cur.handle).catch(() => undefined);
+      await this.register(entry);
+      return { port: entry.handle.port };
+    });
   }
 
   async stop(projectId: string) {
-    const entry = this.entries.get(projectId);
-    this.entries.delete(projectId);
-    if (entry) killTree(entry.child);
-    await prisma.project
-      .update({
-        where: { id: projectId },
-        data: { runtimeStatus: "stopped", port: null },
-      })
-      .catch(() => {});
-    await rm(runFile(projectId), { force: true }).catch(() => {});
+    return this.serialize(projectId, async () => {
+      const entry = this.entries.get(projectId);
+      this.entries.delete(projectId);
+      if (entry) await stopRuntime(entry.handle).catch(() => undefined);
+      await prisma.project
+        .update({
+          where: { id: projectId },
+          data: { runtimeStatus: "stopped", port: null },
+        })
+        .catch(() => {});
+      await rm(runFile(projectId), { force: true }).catch(() => {});
+    });
   }
 
   /**
-   * 原子替换：新版本先在暂存端口完成启动验证，成功才切换注册并停旧进程；
-   * 失败则杀掉暂存进程，旧版本保持在线。
+   * 原子替换：新版本先在暂存端口完成启动验证，成功才切换注册并停旧运行时；
+   * 失败则停掉暂存运行时，旧版本保持在线。
    */
   async swap(
     projectId: string,
     newVersionId: string
   ): Promise<{ port: number } | null> {
-    const old = this.entries.get(projectId);
-    if (old?.versionId === newVersionId) return { port: old.port };
+    return this.serialize(projectId, async () => {
+      const old = this.entries.get(projectId);
+      if (old?.versionId === newVersionId) return { port: old.handle.port };
 
-    const staged = await this.startProcess(projectId, newVersionId);
-    if (!staged) return null; // 旧版本不受影响
+      const staged = await this.startHandle(projectId, newVersionId);
+      if (!staged) return null; // 旧版本不受影响
 
-    if (old) killTree(old.child);
-    await this.register(staged);
-    return { port: staged.port };
+      if (old) await stopRuntime(old.handle).catch(() => undefined);
+      await this.register(staged);
+      return { port: staged.handle.port };
+    });
   }
 
-  /** 清理上次进程遗留的孤儿运行时（run.json 记录 pid，进程组整体终止） */
+  /** 清理上次进程/容器遗留的孤儿运行时 */
   async cleanupOrphanedProcesses(): Promise<number> {
     const { readdir } = await import("node:fs/promises");
     const projectsRoot = path.join(process.cwd(), "storage", "projects");
@@ -161,6 +213,13 @@ class RuntimeManager {
       }
       // 保留 run.json：recover() 依赖它判断该项目曾处于发布运行状态
     }
+    const activeContainers = new Set(
+      [...this.entries.values()]
+        .filter((e) => e.handle.kind === "container")
+        .map((e) => (e.handle.kind === "container" ? e.handle.containerId : ""))
+        .filter(Boolean)
+    );
+    killed += await cleanupOrphanContainers(activeContainers).catch(() => 0);
     return killed;
   }
 
@@ -187,7 +246,11 @@ function runFile(projectId: string) {
 }
 
 async function writeRunFile(projectId: string, data: object) {
-  await writeFile(runFile(projectId), JSON.stringify(data, null, 2), "utf8");
+  const file = runFile(projectId);
+  await mkdir(path.dirname(file), { recursive: true });
+  const tmp = `${file}.${process.pid}.tmp`;
+  await writeFile(tmp, JSON.stringify(data, null, 2), "utf8");
+  await rename(tmp, file);
 }
 
 async function readRunFile(projectId: string) {

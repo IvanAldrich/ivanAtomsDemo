@@ -1,4 +1,5 @@
 import { runtimeManager } from "./runtime/manager";
+import { SESSION_COOKIE } from "./session-core";
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -11,6 +12,20 @@ const HOP_BY_HOP = new Set([
   "upgrade",
   "host",
 ]);
+
+/** 产物运行在不可信边界内：平台会话 Cookie 绝不能转发给生成应用 */
+function stripPlatformCookie(header: string): string {
+  return header
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => part && !part.startsWith(`${SESSION_COOKIE}=`))
+    .join("; ");
+}
+
+function stripPlatformSetCookie(header: string): boolean {
+  const name = header.split("=", 1)[0]?.trim();
+  return name !== SESSION_COOKIE;
+}
 
 /** 注入到产物 HTML <head> 的前缀垫片：路径前缀兼容 + 沙箱存储兜底 + 预览错误上报 */
 function shimScript(prefix: string): string {
@@ -26,14 +41,14 @@ if(window.self!==window.top){var report=function(msg){try{window.top.postMessage
 
 /** 重写 HTML 中的根绝对路径引用（src/href/action="/x" → prefix + "/x"），注入 base 与垫片 */
 function rewriteHtml(html: string, prefix: string): string {
-  let out = html.replace(
-    /(\s(?:src|href|action)=")\/(?!\/)/g,
-    `$1${prefix}/`
-  );
-  // 顺带处理单引号写法
-  out = out.replace(/(\s(?:src|href|action)=')\/(?!\/)/g, `$1${prefix}/`);
-  // base 统一相对路径基准（/p/{slug} 无尾斜杠时浏览器会相对父目录解析）
-  const baseTag = `<base href="${prefix}/">`;
+  let out = html;
+  if (prefix) {
+    out = out.replace(/(\s(?:src|href|action)=")\/(?!\/)/g, `$1${prefix}/`);
+    // 顺带处理单引号写法
+    out = out.replace(/(\s(?:src|href|action)=')\/(?!\/)/g, `$1${prefix}/`);
+  }
+  // 独立子域下 base 为 /；路径代理下为 /p/{slug}/
+  const baseTag = `<base href="${prefix || ""}/">`;
   const shim = shimScript(prefix);
   const headOpen = /<head[^>]*>/i.exec(out);
   if (headOpen) {
@@ -59,16 +74,24 @@ export async function proxyToRuntime(
   prefix: string
 ): Promise<Response> {
   const port = runtimeManager.portFor(projectId);
-  if (!port) {
+  const host = runtimeManager.hostFor(projectId);
+  if (!port || !host) {
     return new Response("project runtime not running", { status: 503 });
   }
 
   const url = new URL(req.url);
-  const target = `http://127.0.0.1:${port}${targetPath}${url.search}`;
+  const target = `http://${host}:${port}${targetPath}${url.search}`;
 
   const headers = new Headers();
   req.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP.has(key.toLowerCase())) headers.set(key, value);
+    const lower = key.toLowerCase();
+    if (HOP_BY_HOP.has(lower)) return;
+    if (lower === "cookie") {
+      const filtered = stripPlatformCookie(value);
+      if (filtered) headers.set(key, filtered);
+      return;
+    }
+    headers.set(key, value);
   });
 
   const init: RequestInit & { duplex?: "half" } = {
@@ -91,11 +114,24 @@ export async function proxyToRuntime(
       if (
         !HOP_BY_HOP.has(lower) &&
         lower !== "content-encoding" &&
-        !(isHtml && lower === "content-length")
+        lower !== "content-length" &&
+        lower !== "set-cookie"
       ) {
         respHeaders.set(key, value);
       }
     });
+
+    // 生成应用不能覆盖平台会话 Cookie
+    const setCookies =
+      (upstream.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.() ??
+      (upstream.headers.get("set-cookie")
+        ? [upstream.headers.get("set-cookie") as string]
+        : []);
+    for (const cookie of setCookies) {
+      if (stripPlatformSetCookie(cookie)) {
+        respHeaders.append("set-cookie", cookie);
+      }
+    }
     // 沙箱 iframe（不透明源）调用产物自身 API 需要 CORS；宿主 Cookie 不随跨源请求发送
     respHeaders.set("Access-Control-Allow-Origin", "*");
     respHeaders.set(

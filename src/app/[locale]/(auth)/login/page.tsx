@@ -16,5 +16,5 @@ export default async function LoginPage({
   const fallback = `/${locale}/dashboard`;
   const redirectTo = sanitizeRedirect(redirectParam, fallback);
 
-  return <LoginForm locale={locale} redirectTo={redirectTo} />;
+  return <LoginForm redirectTo={redirectTo} />;
 }

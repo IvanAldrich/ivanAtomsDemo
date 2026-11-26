@@ -8,10 +8,11 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-  projects  Project[]
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  projects     Project[]
 }
 
 model Project {
@@ -29,6 +30,7 @@ model Project {
   updatedAt        DateTime  @updatedAt
   messages         Message[]
   versions         AppVersion[]
+  buildJobs        BuildJob[]
 }
 
 model Message {
@@ -40,8 +42,39 @@ model Message {
   buildRound  Int?
   buildStatus String? // generating | building | repairing | success | failed | queued
   createdAt   DateTime @default(now())
+  job         BuildJob?
 
   @@index([projectId, createdAt])
+}
+
+model BuildJob {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messageId   String    @unique
+  message     Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  status      String    @default("queued") // queued | leased | running | done | failed
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  leaseOwner  String?
+  leaseUntil  DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([projectId])
+}
+
+model BuildEvent {
+  id        String   @id @default(cuid())
+  messageId String
+  seq       Int
+  payload   String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, seq])
+  @@index([messageId, seq])
 }
 
 model AppVersion {

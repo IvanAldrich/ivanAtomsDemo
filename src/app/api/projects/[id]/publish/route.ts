@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/api-auth";
 import { runtimeManager } from "@/lib/runtime/manager";
+
+const newSlug = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 10);
 
 /** 发布：分配 slug + 启动当前版本运行时；已发布时做原子上切换（失败回滚保旧版在线） */
 export async function POST(
@@ -38,7 +40,7 @@ export async function POST(
     );
   }
 
-  const slug = project.publishedSlug ?? nanoid(10);
+  const slug = project.publishedSlug ?? newSlug();
   await prisma.project.update({
     where: { id },
     data: { publishedSlug: slug, publishedAt: new Date(), updatedAt: new Date() },

@@ -23,9 +23,13 @@ prisma/dev.db*
 # 运行时数据（用户项目工程/构建产物/运行数据，由脚本生成演示工程）
 storage/projects/
 storage/demos/
+storage/worker-heartbeat.json
 
 # TypeScript 增量缓存
 *.tsbuildinfo
+
+# 单元测试编译产物
+.test-build/
 
 # 本地 SQLite
 db/

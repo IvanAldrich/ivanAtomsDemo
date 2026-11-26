@@ -11,6 +11,7 @@ type ChatMessage = {
   content: string;
   buildRound: number | null;
   buildStatus: string | null;
+  createdAt: string;
 };
 
 const IN_FLIGHT = new Set(["queued", "generating", "building", "repairing"]);
@@ -21,6 +22,12 @@ function stepIndex(stage: string | null): number {
   if (stage === "generating") return 1;
   if (stage === "queued") return 0;
   return -1;
+}
+
+function formatDuration(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 export function ChatView({
@@ -53,7 +60,7 @@ export function ChatView({
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [iframeKey, setIframeKey] = useState(0);
   const [iframeLoading, setIframeLoading] = useState(true);
-  const [elapsed, setElapsed] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [publishedSlug, setPublishedSlug] = useState<string | null>(
     initialPublishedSlug
   );
@@ -73,37 +80,61 @@ export function ChatView({
   useEffect(() => {
     if (!IN_FLIGHT.has(initialStatus)) return;
     setStage(initialStatus);
-    setElapsed(0);
     const timer = setInterval(async () => {
       const res = await fetch(`/api/projects/${projectId}/messages`);
       if (!res.ok) return;
       const data = (await res.json()) as { messages: ChatMessage[] };
       setMessages(data.messages);
       const lastUser = [...data.messages].reverse().find((m) => m.role === "user");
-      if (!lastUser || !IN_FLIGHT.has(lastUser.buildStatus ?? "")) {
-        if (lastUser?.buildStatus === "success") setHasVersion(true);
-        setStage(null);
-        setElapsed(null);
-        clearInterval(timer);
+      const status = lastUser?.buildStatus ?? null;
+      if (status && IN_FLIGHT.has(status)) {
+        // 从 queued → generating/building/repairing 时同步阶段，避免页面一直显示“排队中”
+        setStage(status);
+        return;
       }
+      if (status === "success") setHasVersion(true);
+      setStage(null);
+      clearInterval(timer);
     }, 1500);
     return () => clearInterval(timer);
   }, [initialStatus, projectId]);
 
-  // 进行中的计时器
-  useEffect(() => {
-    if (stage === null || !IN_FLIGHT.has(stage)) return;
-    const started = Date.now() - (elapsed ?? 0) * 1000;
-    const timer = setInterval(
-      () => setElapsed(Math.round((Date.now() - started) / 1000)),
-      1000
-    );
-    return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage !== null]);
-
+  // 本轮耗时以服务端消息时间戳为准，刷新/离开页面后仍可恢复
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+  const roundAssistant =
+    lastUser?.buildRound != null
+      ? [...messages]
+          .reverse()
+          .find(
+            (m) =>
+              m.role === "assistant" && m.buildRound === lastUser.buildRound
+          )
+      : undefined;
+  const roundStartedAt = lastUser ? Date.parse(lastUser.createdAt) : NaN;
+  const roundEndedAt = roundAssistant
+    ? Date.parse(roundAssistant.createdAt)
+    : NaN;
+  const lastRoundActive = Boolean(
+    lastUser?.buildStatus && IN_FLIGHT.has(lastUser.buildStatus)
+  );
+  useEffect(() => {
+    if (!lastRoundActive) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [lastRoundActive, lastUser?.id]);
+  const elapsedSec =
+    Number.isFinite(roundStartedAt) && lastUser?.buildStatus
+      ? Math.max(
+          0,
+          Math.floor(
+            ((Number.isFinite(roundEndedAt) ? roundEndedAt : now) -
+              roundStartedAt) /
+              1000
+          )
+        )
+      : null;
   const roundDone =
     stage === null && !sending && lastUser && lastUser.buildStatus !== null;
   const roundSuccess =
@@ -156,7 +187,6 @@ export function ChatView({
     setSending(true);
     setStage("queued");
     setLogs([]);
-    setElapsed(0);
     setMessages((prev) => [
       ...prev,
       {
@@ -165,6 +195,7 @@ export function ChatView({
         content,
         buildRound: null,
         buildStatus: "queued",
+        createdAt: new Date().toISOString(),
       },
     ]);
     try {
@@ -184,7 +215,6 @@ export function ChatView({
     } finally {
       setSending(false);
       setStage(null);
-      setElapsed(null);
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }
@@ -194,7 +224,6 @@ export function ChatView({
     setRetryingId(messageId);
     setStage("queued");
     setLogs([]);
-    setElapsed(0);
     try {
       const res = await fetch(`/api/projects/${projectId}/chat/retry`, {
         method: "POST",
@@ -207,7 +236,6 @@ export function ChatView({
     } finally {
       setRetryingId(null);
       setStage(null);
-      setElapsed(null);
     }
   }
 
@@ -428,6 +456,11 @@ export function ChatView({
                     )}
                   </div>
                 </div>
+                {elapsedSec !== null && (
+                  <p className="mt-2 text-xs tabular-nums text-emerald-700">
+                    {t("elapsed")} {formatDuration(elapsedSec)}
+                  </p>
+                )}
                 {publicUrl && (
                   <a
                     href={`/p/${publishedSlug}`}
@@ -456,6 +489,11 @@ export function ChatView({
                     {retryingId === lastUser!.id ? t("retrying") : t("retry")}
                   </button>
                 </div>
+                {elapsedSec !== null && (
+                  <p className="mt-2 text-xs tabular-nums text-red-700">
+                    {t("elapsed")} {formatDuration(elapsedSec)}
+                  </p>
+                )}
                 <details className="mt-2">
                   <summary className="cursor-pointer text-xs text-red-600">
                     {t("failureDetail")}
@@ -523,10 +561,9 @@ export function ChatView({
                       {t("stage.repairing")}
                     </span>
                   )}
-                  {elapsed !== null && (
+                  {elapsedSec !== null && (lastRoundActive || stage !== null) && (
                     <span className="ml-auto text-xs tabular-nums text-neutral-400">
-                      {t("elapsed")} {String(Math.floor(elapsed / 60)).padStart(2, "0")}:
-                      {String(elapsed % 60).padStart(2, "0")}
+                      {t("elapsed")} {formatDuration(elapsedSec)}
                     </span>
                   )}
                 </div>

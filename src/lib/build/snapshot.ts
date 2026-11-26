@@ -25,8 +25,11 @@ export async function latestSnapshot(projectId: string): Promise<string | null> 
   return path.join(snapshotsRoot, `v${max}`);
 }
 
-/** 快照 GC：仅保留最新 N 个版本目录（防止磁盘无界增长） */
-export async function gcSnapshots(projectId: string, keep = 3): Promise<number> {
+/** 清理未提交的候选快照（失败轮残留），避免被当成下一次迭代基线 */
+export async function cleanupUncommittedSnapshots(
+  projectId: string,
+  committedVersions: Set<number>
+): Promise<number> {
   const snapshotsRoot = path.join(
     process.cwd(),
     "storage",
@@ -40,13 +43,46 @@ export async function gcSnapshots(projectId: string, keep = 3): Promise<number> 
   } catch {
     return 0;
   }
+  let removed = 0;
+  for (const entry of entries) {
+    const m = /^v(\d+)$/.exec(entry);
+    if (!m) continue;
+    if (committedVersions.has(Number(m[1]))) continue;
+    await rm(path.join(snapshotsRoot, entry), { recursive: true, force: true });
+    removed += 1;
+  }
+  return removed;
+}
+
+/** 快照 GC：仅保留最新 N 个版本目录，但绝不删除仍在运行/当前版本的目录 */
+export async function gcSnapshots(
+  projectId: string,
+  keep = 3,
+  protectedDirs: string[] = []
+): Promise<number> {
+  const snapshotsRoot = path.join(
+    process.cwd(),
+    "storage",
+    "projects",
+    projectId,
+    "snapshots"
+  );
+  let entries: string[];
+  try {
+    entries = await readdir(snapshotsRoot);
+  } catch {
+    return 0;
+  }
+  const protect = new Set(protectedDirs.map((p) => path.resolve(p)));
   const versions = entries
     .map((e) => ({ name: e, n: Number(/^v(\d+)$/.exec(e)?.[1] ?? NaN) }))
     .filter((v) => Number.isInteger(v.n))
     .sort((a, b) => b.n - a.n);
   let removed = 0;
   for (const v of versions.slice(keep)) {
-    await rm(path.join(snapshotsRoot, v.name), { recursive: true, force: true });
+    const full = path.join(snapshotsRoot, v.name);
+    if (protect.has(path.resolve(full))) continue;
+    await rm(full, { recursive: true, force: true });
     removed += 1;
   }
   return removed;
@@ -64,7 +100,7 @@ export async function readTree(dir: string): Promise<string[]> {
     for (const e of entries) {
       const full = path.join(cur, e.name);
       if (e.isDirectory()) {
-        if (["node_modules", ".git", ".npm", ".cache"].includes(e.name)) continue;
+        if (["node_modules", ".git", ".npm", ".cache", ".atoms"].includes(e.name)) continue;
         await walk(full);
       } else {
         out.push(path.relative(dir, full));

@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 
-export const SESSION_COOKIE = "ia_session";
+export const SESSION_COOKIE =
+  process.env.COOKIE_SECURE === "true" ? "__Host-ia_session" : "ia_session";
 
 export function sessionSecret(): Uint8Array {
   const secret = process.env.SESSION_SECRET;

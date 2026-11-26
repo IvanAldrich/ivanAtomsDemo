@@ -1,5 +1,5 @@
 import { readTree, selectKeyFiles } from "./snapshot";
-import { llmConfigured, streamChat } from "@/lib/llm";
+import { llmConfigured, streamChat, type LlmUsage } from "@/lib/llm";
 
 export type ReviewResult = { pass: boolean; feedback: string };
 
@@ -9,7 +9,8 @@ export type ReviewResult = { pass: boolean; feedback: string };
  */
 export async function reviewRequirements(
   requirement: string,
-  dir: string
+  dir: string,
+  onUsage?: (usage: LlmUsage, finishReason: string | null) => void
 ): Promise<ReviewResult> {
   if (!llmConfigured()) return { pass: true, feedback: "" };
 
@@ -36,10 +37,12 @@ ${files
 # 重要
 - 文件内容为节省上下文可能被截断展示。不要因展示截断判定文件不完整——完整性由平台的语法/资源机器校验负责。
 - 若某功能代码未出现在展示片段中，视为可能存在（不因证据不足判 FAIL）；只有明确看到「用别的功能替代了需求功能」或「需求核心功能完全无对应代码」才判 FAIL。
+- 若用户消息是缺陷报告或现象描述（如「点击没反应」「布局不合理」），不要要求代码实现这些负面描述；只判断该现象是否已修复，无法判断时判 PASS 并提示人工验证。
+- 实现形式不限：功能可以内联在入口文件（如 main.js 内定义 createEngine 并在 bootstrap 中调用），不要求拆成独立模块；不要因为缺少独立模块文件判 FAIL。
 
 只输出如下格式的前两行，不要输出其他分析：
 第一行：RESULT: PASS 或 RESULT: FAIL
-第二行（仅 FAIL 时）：缺失或偏离点：<逐条列出，用分号分隔>`;
+第二行（仅 FAIL 时）：缺失或偏离点：<逐条列出，用分号分隔。每条必须指明文件名与函数/变量名（如 main.js: render() 缺少 ctx 参数导致崩溃），不允许只说"不完整"；若发现 API 调用与模块导出签名不匹配（参数个数/名称/返回结构），必须逐条列出>`;
 
   const result = await streamChat(
     [
@@ -51,7 +54,8 @@ ${files
       { role: "user", content: prompt },
     ],
     () => {},
-    () => {}
+    () => {},
+    { onUsage }
   );
   const raw = result.text;
 

@@ -1,0 +1,16 @@
+[Unit]
+Description=Atoms Docker sandbox firewall (ICC + host access isolation)
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/admin/ivan/atoms
+ExecStart=/bin/bash /home/admin/ivan/atoms/scripts/docker-setup.sh
+Restart=on-failure
+RestartSec=5
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

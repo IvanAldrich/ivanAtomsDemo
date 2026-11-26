@@ -39,6 +39,7 @@ export default async function ChatPage({
         content: m.content,
         buildRound: m.buildRound,
         buildStatus: m.buildStatus,
+        createdAt: m.createdAt.toISOString(),
       }))}
     />
   );

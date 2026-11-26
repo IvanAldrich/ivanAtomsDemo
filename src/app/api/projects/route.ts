@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       where: { id: project.id },
       data: { status: "queued" },
     });
-    buildQueue.enqueue({ projectId: project.id, messageId: message.id });
+    await buildQueue.enqueue({ projectId: project.id, messageId: message.id });
   }
 
   return NextResponse.json({ project: { id: project.id } }, { status: 201 });

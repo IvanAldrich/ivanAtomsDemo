@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { proxyToRuntime } from "@/lib/proxy";
 import { runtimeManager } from "@/lib/runtime/manager";
+import { isAppHost } from "@/lib/app-domain";
 
 async function handle(
   req: Request,
@@ -8,9 +9,16 @@ async function handle(
 ) {
   const { slug, path } = await params;
 
-  const project = await prisma.project.findUnique({
-    where: { publishedSlug: slug },
+  const normalized = slug.toLowerCase();
+  let project = await prisma.project.findUnique({
+    where: { publishedSlug: normalized },
   });
+  // 兼容历史大小写 slug
+  if (!project && slug !== normalized) {
+    project = await prisma.project.findUnique({
+      where: { publishedSlug: slug },
+    });
+  }
   // 未发布或已取消发布：不可公开访问
   if (!project || !project.publishedSlug || project.publishedAt === null) {
     return new Response("not found", { status: 404 });
@@ -24,7 +32,9 @@ async function handle(
   }
 
   const subPath = "/" + (path ?? []).map(encodeURIComponent).join("/");
-  return proxyToRuntime(req, project.id, subPath, `/p/${slug}`);
+  // 独立子域下根路径直接可用；平台路径代理下需要前缀重写
+  const prefix = isAppHost(req.headers.get("host")) ? "" : `/p/${slug}`;
+  return proxyToRuntime(req, project.id, subPath, prefix);
 }
 
 export {

@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "outDir": ".test-build",
+    "rootDir": "src/lib",
+    "types": ["node"],
+    "noEmit": false
+  },
+  "include": [
+    "src/lib/build/__tests__/**/*.test.ts",
+    "src/lib/build/file-kinds.ts",
+    "src/lib/build/protocol.ts",
+    "src/lib/build/snapshot.ts",
+    "src/lib/build/manifest.ts",
+    "src/lib/build/profiles.ts",
+    "src/lib/build/prompts.ts",
+    "src/lib/build/structure.ts",
+    "src/lib/build/context.ts",
+    "src/lib/build/split.ts",
+    "src/lib/build/stats.ts",
+    "src/lib/build/intent.ts",
+    "src/lib/build/flags.ts",
+    "src/lib/build/scaffold.ts",
+    "src/lib/build/builder.ts",
+    "src/lib/build/executor.ts",
+    "src/lib/ports.ts",
+    "src/lib/preview-token.ts",
+    "src/lib/password.ts"
+  ]
+}
